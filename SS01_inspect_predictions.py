@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import utils_io as uio
 import utils_signal_processing as sig_proc
 import utils_visualization as viz
-import utils_retraining as retr
+import utils_retraining as retrn
 
 def run_step(step, subj):
     "check if step done, if overwrite true or inspected"
@@ -39,6 +39,7 @@ extension = "_Finger_Tapping"
 model_name = '_resnet152_FingerTappingJan29shuffle2_550000'
 pat_sbjs, subjs = uio.get_sbj_folders(pat_dlc_vids, name_len=16,
                                       sufix=f'*{model_name}.csv')
+root_dir = '/mnt/Data/projects/Ataxia'
 paths = uio.get_paths(model_name)
 df_beh = pd.read_csv(paths['beh'], index_col=0)
 # CSV files storing results
@@ -157,7 +158,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
 
     subj_data['TS'] = int2
     TS_predictions[subj] = subj_data
-    retr.save_labeled_data(int2, res, subj, path_s, DLC_path, extension,
+    retrn.save_labeled_data(int2, res, subj, path_s, DLC_path, extension,
                       lab_csv_name)
     axes[0].clear(); axes[1].clear(); fig.patch.set_facecolor('w')
 

@@ -226,7 +226,7 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
                        "time point for inspection. Then, press Enter) to plot "
                        "frame or Escape) to select another point")
     fig.tight_layout()
-    new_pred, good_pred = [], []
+    new_pred, good_pred, relab = [], [], []
     while True:
         res, avline = get_clicked_times(fig, axes, 'k')
         if res['inxs']:
