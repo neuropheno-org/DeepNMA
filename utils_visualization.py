@@ -129,10 +129,22 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
             for xy_p, xy_v in zip(xy[0][0], xy[0][1]):
                 out_new.append([nf, ns, int(xy_p), round(xy_v)])
 
+    # Ensure same prediction diff axis (x, y) are not inspected twice
     frames_nums = [ o[2] for o in out_new]
-    
+    u_val, u_x, u_inv, u_c = np.unique(frames_nums, return_index=True, 
+                                       return_inverse=True, return_counts=True)
+    o_done = np.zeros(u_c.size, dtype=bool)
+
     for i, out in enumerate(out_new):
         frame_num = out[2]
+
+        # Check if inspected previous axis (x, y)
+        if o_done[u_inv[i]]:
+            prev = frames_nums.index(frame_num)
+            # Add resp from previous axis
+            out_new[i].append(out_new[prev][-1])
+            continue
+
         frame = uio.get_prediction_frame(path_s, subj, frame_num)
         coords_ori = fingers[:, :, frame_num]
         coords_out = int2[:, :, frame_num]
@@ -179,6 +191,7 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
         axis.clear()
         fig.patch.set_facecolor('w')
         out_new[i].append(res)
+        o_done[u_inv[i]] = True
     return out_new, relab
 
 
