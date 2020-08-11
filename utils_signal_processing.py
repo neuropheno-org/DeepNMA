@@ -106,8 +106,11 @@ def get_continuous_ts(finger, max_nans=30):
     seg, n_seg  = label(gaps==0)
     for s in range(1, n_seg+1):
         ix, = np.where(seg==s)
+
         s_ts, ix = _remove_nans_ts(finger[np.newaxis, :, ix], ix)
         if np.sum(~np.isnan(s_ts[0,0,:]))<4:
+            continue
+        if ix.size < 10:
             continue
         s_ts = np.squeeze(s_ts)
         fing_seg.append(s_ts)
