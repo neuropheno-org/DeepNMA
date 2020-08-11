@@ -58,9 +58,10 @@ def get_res_frames(subj, res):
     for rt in res_types:
         vals = res.subj_vals(rt, subj)['frames'].values.tolist()
         if rt == "nans_pred":
-            vals, = vals
+            vals = eval(vals) if isinstance(vals, str) else vals
             if vals == []:
                 continue
+            vals, = vals
         elif rt =="good_pred" and vals != []:
             vals = eval(vals[0])
         if not any(np.isnan(vals)):
