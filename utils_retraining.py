@@ -57,14 +57,14 @@ def get_res_frames(subj, res):
     frames = []
     for rt in res_types:
         vals = res.subj_vals(rt, subj)['frames'].values.tolist()
+        if vals == [[]] or vals == []:
+            continue
         if rt == "nans_pred":
-            if vals == []:
-                continue
             vals, = vals
             vals = eval(vals) if isinstance(vals, str) else vals
             if vals == []:
                 continue
-        elif rt =="good_pred" and vals != []:
+        elif rt =="good_pred" :
             vals = eval(vals[0])
         if not any(np.isnan(vals)):
             frames.extend([int(v) for v in vals])
