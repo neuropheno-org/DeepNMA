@@ -1,2 +1,2 @@
 # DeepNMA
-Deep Learning body positions tracking for neuromotor assessments
+Body positions tracking using DeepLearning for neuromotor assessments.
