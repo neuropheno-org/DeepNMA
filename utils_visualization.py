@@ -196,9 +196,11 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
 
 
 def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
-                       subj_diag, axes, fig):
+                       subj_diag, axes, fig, ttl=None):
     axes[0].clear()
     axes[1].clear()
+    if ttl:
+        axes[0].set_xlabel(ttl, fontweight='bold')
 
     lines0 = axes[0].plot(timestmp, int2[:,0,:].T, '-', lw=1, picker=3)
     lines1 = axes[1].plot(timestmp, int2[:,1,:].T, '-', lw=1, picker=3)

@@ -5,7 +5,7 @@ Created on Mon Jun 15 10:46:38 2020
 
 @author: adonay
 """
-
+import os.path as op
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -27,31 +27,34 @@ def run_step(step, subj):
 
 
 # Path definitions
+root_dir = '/mnt/Data/projects/Ataxia'
+
 pat_dlc = '/mnt/Samsung_T5/DLC/FingerTapping-Adonay-2020-01-29/'
 pat_dlc_vids = [pat_dlc + 'videos/',
                  pat_dlc + 'videos_dsmpl_labeled/',
                  pat_dlc + 'new_videos/']
 
 lab_csv_name = "CollectedData_Adonay.csv"
-DLC_path= "FingerTapping-Adonay-2020-01-29/labeled-data"
+pat_dlc_labs= op.join(pat_dlc, "labeled-data")
+
 extension = "_Finger_Tapping"
 
 model_name = '_resnet152_FingerTappingJan29shuffle2_550000'
 pat_sbjs, subjs = uio.get_sbj_folders(pat_dlc_vids, name_len=16,
                                       sufix=f'*{model_name}.csv')
-root_dir = '/mnt/Data/projects/Ataxia'
-paths = uio.get_paths(model_name)
+
+paths = uio.get_paths(model_name, root_dir)
 df_beh = pd.read_csv(paths['beh'], index_col=0)
 # CSV files storing results
 res = uio.results_dic(paths)
 
 
-OVERWRT = {'pred_qual':False,
-           'times':False,
-           "outliers":False,
-           "bad_pred":False,
-           "good_pred":False,
-           "nans_pred":False}
+OVERWRT = {'pred_qual':True,
+           'times':True,
+           "outliers":True,
+           "bad_pred":True,
+           "good_pred":True,
+           "nans_pred":True}
 
 
 fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
@@ -60,7 +63,7 @@ fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
 TS_predictions = {}
 n= 1
 isb, path_s, subj = n, pat_sbjs[n], subjs[n]
-for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
+for isb, (path_s, subj) in enumerate(zip(pat_sbjs[6:7], subjs[6:7])):
     subj_data={}
 
     subj_diag = df_beh.loc[subj,'General Diagnosis']
@@ -84,6 +87,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
         res_qc = res.subj_vals("pred_qual", subj)["quality"].to_list()[0]
         viz.resp_corr_fig_bkg(fig, res_qc)
     subj_data['pred_qual'] = res_qc
+
 
     if res_qc == "good":
         # Get beginning and end right & left tapping
@@ -124,41 +128,43 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
                                          subj)['frames'].values.tolist()
             gd_nan_pred = eval(gd_nan_pred) if gd_nan_pred else []
 
+        # update relabels
+        relab.extend(bd_relab)
+        for rlb in bd_relab:
+            int2[rlb[1], :, rlb[0]] = rlb[2:]
+
+        # inspect suspicious
+        relabeled= []
+        if run_step("bad_pred", subj):
+            relabeled, _ = viz.plot_ts_inspection(
+                out_good, timestmp, int1, int2, path_s, subj, subj_diag, axes, fig)
+            relabeled.extend(relab)
+            res.add_bad_pred(relabeled, subj)
+        else:
+            if len(relab):
+                res.add_bad_pred(relab, subj)
+            cols_v = ['frames', 'finger', 'x', 'y']
+            relabeled = res.subj_vals("bad_pred", subj)[cols_v].values.tolist()
+            relabeled = [] if np.all(np.isnan(relabeled)) else relabeled
+    
+        for rlb in relabeled:
+            if not np.all(np.isnan(rlb)):
+                int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
+            
     elif res_qc == "bad":
-        if run_step("good_pred", subj):
-            ttl = "SELECT GOOD PREDICTIONS " + subj_diag
-            bd_relab, good_pred = viz.plot_ts_inspection([], timestmp, int1, int2,
-                                                  path_s, subj, ttl, axes, fig)
+        if run_step("good_pred", subj) & run_step("bad_pred", subj):  ##TODO fix with a proper step
+            ttl = f"SELECT GOOD and BAD PREDICTIONS for retraining"
+            bd_relab, good_pred = viz.plot_ts_inspection(
+                [], timestmp, int1, int2, path_s, subj, subj_diag, axes, fig, ttl)
             res.add_vals('good_pred', [subj, good_pred])
+            res.add_bad_pred([bd_relab[0]], subj)
     else:
         ValueError("No prediction quality information")
 
-    # update relabels
-    relab.extend(bd_relab)
-    for rlb in bd_relab:
-        int2[rlb[1], :, rlb[0]] = rlb[2:]
-
-    # inspect suspicious
-    relabeled= []
-    if run_step("bad_pred", subj):
-        relabeled, _ = viz.plot_ts_inspection(out_good, timestmp, int1, int2,
-                                              path_s, subj, subj_diag, axes, fig)
-        relabeled.extend(relab)
-        res.add_bad_pred(relabeled, subj)
-    else:
-        if len(relab):
-            res.add_bad_pred(relab, subj)
-        cols_v = ['frames', 'finger', 'x', 'y']
-        relabeled = res.subj_vals("bad_pred", subj)[cols_v].values.tolist()
-        relabeled = [] if np.all(np.isnan(relabeled)) else relabeled
-
-    for rlb in relabeled:
-        if not np.all(np.isnan(rlb)):
-            int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
 
     subj_data['TS'] = int2
     TS_predictions[subj] = subj_data
-    retrn.save_labeled_data(int2, res, subj, path_s, DLC_path, extension,
+    retrn.save_labeled_data(int2, res, subj, path_s, pat_dlc_labs, extension,
                       lab_csv_name)
     axes[0].clear(); axes[1].clear(); fig.patch.set_facecolor('w')
 
