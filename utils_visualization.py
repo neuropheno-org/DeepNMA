@@ -370,12 +370,18 @@ def plot_make_new_pred(frame, coord, fig, ax, frame_num):
         except Exception: 
             pass
 
+    def legend_coor(coord):
+        legend = [s + f" - {c}" if np.isnan(c[0]) else s + f" - {c.astype(int)}" 
+                  for s, c in zip(leg_names, coord)]
+        return legend
+    
     ax.clear()
     ax.imshow(frame, picker=True)
     leg_names = ["0 - r_thm", "1 - r_inx", "2 - r_wrt",
                  "3 - l_thm", "4 - l_inx", "5 - l_wrt"]
+    legnd = legend_coor(coord)
     points = [ax.plot(c[0], c[1], 'x') for c in coord]
-    ax.legend( [c  for p in points for c in p], leg_names)
+    ax.legend([c  for p in points for c in p], legnd)
     
     resp = {'data': [], 'inxs':[], 'key':None}
     new_coord = coord.copy()
@@ -414,6 +420,8 @@ def plot_make_new_pred(frame, coord, fig, ax, frame_num):
                     points[k][0].remove()
                     points.pop(k)
                     points.insert(k, new_p)
+                    new_leg = legend_coor(new_coord)
+                    ax.legend( [c  for p in points for c in p], new_leg)
 
                     fig.canvas.mpl_disconnect(cid1)
                     crs.remove()
