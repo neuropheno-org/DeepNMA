@@ -171,8 +171,8 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
                 relab.extend(pred)
                 plt.close(fig2)
                 for p in pred:
-                    coords_out[p[1], :] = p[2:]
-                    int2[p[1], :, p[0]] = p[2:]
+                    coords_out[int(p[1]), :] = p[2:]
+                    int2[int(p[1]), :, int(p[0])] = p[2:]
                 plot_frame_outlier(frame, coords_ori, coords_out, ax2)
                 axis.set_xlabel(f"Instructions. enter) to confirm"
                            " escape) respond again")
@@ -327,7 +327,7 @@ def ret_new_pred(frame_num, coords, coords_out):
                   enumerate(zip(coords, coords_out))
                   if not array_equal_nan(n, o)]
     pred = np.vstack(pred) if len(pred) else np.array([])
-    return list(pred.astype('int'))
+    return list(pred)
 
 
 def array_equal_nan(a1, a2):
