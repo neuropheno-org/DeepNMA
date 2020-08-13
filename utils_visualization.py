@@ -480,6 +480,11 @@ def get_clicked_times(fig, axes, clr):
             break
 
         if len(resp['inxs']) and clr and not resp['inxs'] == previous_resp:
+            if ax_vls:
+                for i, l in enumerate(ax_vls):
+                    l.remove()
+                ax_vls = []
+
             for ax in axes:
                 ax_vls.append(ax.axvline(resp['data'][0], c=clr, lw=1))
             previous_resp = resp['inxs']
