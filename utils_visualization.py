@@ -377,8 +377,8 @@ def plot_make_new_pred(frame, coord, fig, ax, frame_num):
     
     ax.clear()
     ax.imshow(frame, picker=True)
-    leg_names = ["0 - r_thm", "1 - r_inx", "2 - r_wrt",
-                 "3 - l_thm", "4 - l_inx", "5 - l_wrt"]
+    leg_names = ["0 - r_inx ", "1 - r_thm", "2 - r_wrt ",
+                 "3 - l_inx", "4 - l_thm", "5 - l_wrt "]
     legnd = legend_coor(coord)
     points = [ax.plot(c[0], c[1], 'x') for c in coord]
     ax.legend([c  for p in points for c in p], legnd)
@@ -393,17 +393,18 @@ def plot_make_new_pred(frame, coord, fig, ax, frame_num):
             break
         elif resp['key'] in  range(6):
             k = resp['key']
+            resp['key'] = []
             crs, = ax.plot(new_coord[k][0], new_coord[k][1], 'ko',
                            markerfacecolor=None)
-            ax.set_xlabel(f'Click on new position for "{leg_names[k]}", press'
-                          "n) for none, esc) to leave")
+            ax.set_xlabel(f'Click on new position for "{leg_names[k]}", press '
+                          "num again) for none, esc) to leave")
             while True:
                 cid1 = fig.canvas.mpl_connect('pick_event', onclick1)
                 if resp['key'] in ['enter', 'escape']:
                     break
 
-                if len(resp['data']) or resp['key'] == "n":
-                    if resp['key'] == "n":
+                if len(resp['data']) or resp['key'] == k:
+                    if resp['key'] == k:
                         x, y = np.nan, np.nan
                     else:
                         x, y = resp['data'][0], resp['data'][1]

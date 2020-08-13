@@ -157,7 +157,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs[6:7], subjs[6:7])):
             bd_relab, good_pred = viz.plot_ts_inspection(
                 [], timestmp, int1, int2, path_s, subj, subj_diag, axes, fig, ttl)
             res.add_vals('good_pred', [subj, good_pred])
-            res.add_bad_pred([bd_relab[0]], subj)
+            res.add_bad_pred(bd_relab, subj)
     else:
         ValueError("No prediction quality information")
 
