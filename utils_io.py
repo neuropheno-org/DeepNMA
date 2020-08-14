@@ -54,7 +54,7 @@ def get_paths(model_name, root_dir="."):
     "beh" : root_dir +"/2019_12_18_All_Clinical_Data.csv",
     "out" : root_dir + "/outputs/DLC_finger_tracking/"
     }
-    path["out_TS"] = path["out"] + "TS/"
+    path["out_TS"] = op.join(path['out'], f'TS_data{model_name}.pickle')
     path['outliers'] = path["out"] + f"Outlier_detect_{model_name}.csv"
     path['times'] = path["out"] + f"TS_times_{model_name}.csv"
     path['pred_qual'] = path["out"] + f"Pred_good_bad_{model_name}.csv"

@@ -114,7 +114,7 @@ def plot_contig_frames(res, frame_num, fingers, int2, path_s, subj, relab):
             relab.extend(pred)
             plt.close(fig2)
             for p in pred:
-                int2[p[1], :, p[0]] = p[2:]
+                int2[int(p[1]), :, int(p[0])] = p[2:]
 
     return relab
 

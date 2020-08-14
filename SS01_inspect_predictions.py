@@ -8,6 +8,7 @@ Created on Mon Jun 15 10:46:38 2020
 import os.path as op
 import numpy as np
 import pandas as pd
+import pickle
 import matplotlib.pyplot as plt
 import utils_io as uio
 import utils_signal_processing as sig_proc
@@ -24,6 +25,21 @@ def run_step(step, subj):
         res.remove_vals(step, subj)
 
     return sj_vals.shape[0] == 0 or  OVERWRT[step]
+
+def saved_TS_data(paths, TS_predictions=None):
+    "Save TS_predictions if not None or load them/create dict"
+
+    if TS_predictions is not None:
+        with open(paths['out_TS'], 'wb') as f:
+            pickle.dump(TS_predictions, f)
+        return
+
+    if op.exists(paths['out_TS']):
+        with open(paths['out_TS'], 'rb') as f:
+            TS_predictions = pickle.load(f)
+    else:
+        TS_predictions = {}
+    return TS_predictions
 
 
 # Path definitions
@@ -49,20 +65,24 @@ df_beh = pd.read_csv(paths['beh'], index_col=0)
 res = uio.results_dic(paths)
 
 
-OVERWRT = {'pred_qual':True,
-           'times':True,
-           "outliers":True,
-           "bad_pred":True,
-           "good_pred":True,
-           "nans_pred":True}
+OVERWRT = {"subj_done" :False,
+           'pred_qual':False,
+           'times':False,
+           "outliers":False,
+           "bad_pred":False,
+           "good_pred":False,
+           "nans_pred":False}
 
 
-fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
+TS_predictions = saved_TS_data(paths)
+subjs_in = [i for i, s in enumerate(subjs) if s not in TS_predictions.keys()]
+pat_sbjs, subjs = [[l[p] for p in subjs_in] for l in [pat_sbjs, subjs]]
 
-TS_predictions = {}
+
 n= 1
 isb, path_s, subj = n, pat_sbjs[n], subjs[n]
-for isb, (path_s, subj) in enumerate(zip(pat_sbjs[6:7], subjs[6:7])):
+fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
+for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     subj_data={}
 
     subj_diag = df_beh.loc[subj,'General Diagnosis']
