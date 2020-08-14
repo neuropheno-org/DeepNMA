@@ -202,25 +202,28 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
     if ttl:
         axes[0].set_xlabel(ttl, fontweight='bold')
 
-    lines0 = axes[0].plot(timestmp, int2[:,0,:].T, '-', lw=1, picker=3)
-    lines1 = axes[1].plot(timestmp, int2[:,1,:].T, '-', lw=1, picker=3)
+    def plot_ts(int2):
+        lines0 = axes[0].plot(timestmp, int2[:,0,:].T, '-', lw=1, picker=3)
+        lines1 = axes[1].plot(timestmp, int2[:,1,:].T, '-', lw=1, picker=3)
 
-    ln_clr= ['r', 'g']
-    n_side = len(lines0)/2
-    n_r = np.arange(n_side, dtype='int')
-    n_l = np.arange(n_side, n_side*2, dtype='int')
+        ln_clr= ['r', 'g']
+        n_side = len(lines0)/2
+        n_r = np.arange(n_side, dtype='int')
+        n_l = np.arange(n_side, n_side*2, dtype='int')
+    
+        for s, c in zip([n_r, n_l], ln_clr): # side and color
+            for l in [ np.array(lines0)[s],  np.array(lines1)[s]]: # lines
+                for j in l:
+                    j.set_color(c)
+        return lines0, lines1
 
-    for s, c in zip([n_r, n_l], ln_clr): # side and color
-        for l in [ np.array(lines0)[s],  np.array(lines1)[s]]: # lines
-            for j in l:
-                j.set_color(c)
+    lines0, lines1 = plot_ts(int2)
     # Plot outliers
-    if out_checked:
-        for out in out_checked:
-            out[:4] = [int(i) for i in out[:4]]
-            color = "go" if out[-1] == 'good' else "ro"
-            axes[out[1]].plot(timestmp[out[2]], out[3], color,
-                              markerfacecolor=None)
+    for out in out_checked:
+        out[:4] = [int(i) for i in out[:4]]
+        color = "go" if out[-1] == 'good' else "ro"
+        axes[out[1]].plot(timestmp[out[2]], out[3], color,
+                          markerfacecolor=None)
 
     plot_per_axis(int1, timestmp, 'b', axes, **{'alpha':.2})
     axes[0].set_title(f'Diag:{subj_diag}| {subj}: doing TS inspection')
@@ -237,6 +240,10 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
                                           avline, [])
             if len(pred):
                 new_pred.extend(pred)
+                _ = [(l.remove(), l1.remove()) for l, l1 in zip(lines0,lines1)]
+                for p in pred:
+                    int2[int(p[1]),:,int(p[0])] = p[2:]
+                lines0, lines1 = plot_ts(int2)
             else:
                 good_pred.append(frame_num)
         else:

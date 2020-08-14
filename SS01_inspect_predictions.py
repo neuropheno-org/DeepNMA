@@ -59,7 +59,6 @@ OVERWRT = {'pred_qual':True,
 
 fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
 
-
 TS_predictions = {}
 n= 1
 isb, path_s, subj = n, pat_sbjs[n], subjs[n]
