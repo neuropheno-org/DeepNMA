@@ -165,11 +165,11 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
             cols_v = ['frames', 'finger', 'x', 'y']
             relabeled = res.subj_vals("bad_pred", subj)[cols_v].values.tolist()
             relabeled = [] if np.all(np.isnan(relabeled)) else relabeled
-    
+
         for rlb in relabeled:
             if not np.all(np.isnan(rlb)):
                 int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
-            
+
     elif res_qc == "bad":
         if run_step("good_pred", subj) & run_step("bad_pred", subj):  ##TODO fix with a proper step
             ttl = f"SELECT GOOD and BAD PREDICTIONS for retraining"

@@ -262,28 +262,28 @@ def plot_pred_relab(path_s, subj, frame_num, int1, int2, avline, relab, ttl=None
     coords_out = int2[:, :, frame_num]
     while True:
         plot_frame_outlier(frame, coords_ori, coords_out, ax2)
+
         ax2.set_xlabel(f"Good prediction?"
-                       f" Press:  0) if no  1) if yes, r) relabel, p - q) " 
-                       " contiguous frames \n Then enter) next or"
-                       " escape) respond again")
-        ax2.set_xlabel(f"Good prediction?"
-                       f" Press:  0) if no  1) if yes, p - q) " 
+                       f" Press:  0) if no, r) no and relabel,  1) if yes, p - q) " 
                        " contiguous frames \n Then enter) next or"
                        " escape) respond again")
         fig2.tight_layout()
         # Select if good outlier
-        # res1 = get_key_resp(fig2, vals=[0, 1, "p", "n", "r"])
-        res1 = get_key_resp(fig2, vals=[0, 1, "p", "n"])
+        res1 = get_key_resp(fig2, vals=[0, 1, "p", "n", "r"])
         # Plot contiguous frames
         if res1 in ["p", "n"]:
             relab = plot_contig_frames(res1, frame_num, int1, int2, path_s,
                                        subj, relab)
-            res1 = get_key_resp(fig2, vals=[0, 1])
+            continue
+            # res1 = get_key_resp(fig2, vals=[0, 1])
         elif res1 == "r":
-            fig, ax = plt.subplots(1, 1, figsize=(20, 10))
-            pred = plot_make_new_pred(frame, coords_out, fig, ax, frame_num)
-            relab.extend(pred)
-            plt.close(fig)
+            pred = plot_make_new_pred(frame, coords_out, fig2, ax2, frame_num)
+            new_pred.extend(pred)
+            plt.close(fig2)
+            for l in avline:
+                l.set_color("r")
+            break
+
             for p in pred:
                 coords_out[p[1], :] = p[2:]
             plot_frame_outlier(frame, coords_ori, coords_out, ax2)
