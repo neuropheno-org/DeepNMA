@@ -163,8 +163,7 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
                                            path_s, subj, relab)
                 res = get_key_resp(fig, vals=[0, 1])
             elif res == "r":
-                res = 0
-
+                res = resp_corr_fig_bkg(fig, 0)
                 fig2, ax2 = plt.subplots(1, 1, figsize=(20, 10))
                 pred = plot_make_new_pred(frame, coords_out, fig2, ax2,
                                           frame_num)
@@ -173,9 +172,10 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
                 for p in pred:
                     coords_out[int(p[1]), :] = p[2:]
                     int2[int(p[1]), :, int(p[0])] = p[2:]
-                plot_frame_outlier(frame, coords_ori, coords_out, ax2)
+                plot_frame_outlier(frame, coords_ori, coords_out, axis)
                 axis.set_xlabel(f"Instructions. enter) to confirm"
                            " escape) respond again")
+                break
 
 
             res = resp_corr_fig_bkg(fig, res)
