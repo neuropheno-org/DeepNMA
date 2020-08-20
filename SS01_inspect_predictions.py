@@ -164,6 +164,8 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
         if run_step("bad_pred", subj):
             relabeled, _ = viz.plot_ts_inspection(
                 out_good, timestmp, int1, int2, path_s, subj, subj_diag, axes, fig)
+            n_relab = np.unique([r[0] for r in relabeled]).size
+            print(f"{subj}: {n_relab} relabeled")
             relabeled.extend(relab)
             res.add_bad_pred(relabeled, subj)
         else:
@@ -182,6 +184,9 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
             ttl = f"SELECT GOOD and BAD PREDICTIONS for retraining"
             bd_relab, good_pred = viz.plot_ts_inspection(
                 [], timestmp, int1, int2, path_s, subj, subj_diag, axes, fig, ttl)
+            n_relab = np.unique([r[0] for r in bd_relab]).size
+            n_gd = np.unique([r[0] for r in good_pred]).size
+            print(f"{subj}: {n_relab} relabeled, {n_gd} good")
             res.add_vals('good_pred', [subj, good_pred])
             res.add_bad_pred(bd_relab, subj)
     else:
@@ -192,6 +197,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     TS_predictions[subj] = subj_data
     retrn.save_labeled_data(int2, res, subj, path_s, pat_dlc_labs, extension,
                       lab_csv_name)
+    saved_TS_data(paths, TS_predictions)
     axes[0].clear(); axes[1].clear(); fig.patch.set_facecolor('w')
 
 
