@@ -68,9 +68,11 @@ def ts_prepro(fingers, timestamp, times=None, max_nans_sec=.5):
 
         s_out = []
         for s_ix, s_ts in zip(seg_ix, ts_segments):
+            s_ts, s_ix = _remove_nans_ts(s_ts[np.newaxis,:,:], s_ix)
+            s_ts = s_ts.squeeze()
+            
             msk = np.isnan(s_ts[0,:])
             s_tstm = timestamp[s_ix,0]
-            
             s_ts_int1, _ = interp_tracking(s_ts, s_tstm, msk, lin_space=False)
             o_ix, o_val, _ = detect_outlier(s_ts_int1)
             # get outlier ts time, index and value 
