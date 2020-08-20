@@ -84,7 +84,11 @@ def ts_prepro(fingers, timestamp, times=None, max_nans_sec=.5):
             fingers_int1[i_f, :, s_ix] = s_ts_int1.T
             fingers_int2[i_f, :, s_ix] = s_ts_int2.T
         # Outliers with shape finger:(x,y):[ix, val]
-        o =[[np.hstack([i[n] for i in s_out ])] for n in range(2)]
+        o = []
+        if len(s_out):
+            o =[[np.hstack([i[n] for i in s_out])] for n in range(2)]
+        else:
+            o = []
         outliers.append(o)
 
     return fingers_int1, fingers_int2, outliers

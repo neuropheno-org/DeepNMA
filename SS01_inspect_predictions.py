@@ -79,7 +79,7 @@ subjs_in = [i for i, s in enumerate(subjs) if s not in TS_predictions.keys()]
 pat_sbjs, subjs = [[l[p] for p in subjs_in] for l in [pat_sbjs, subjs]]
 
 
-n= 0
+n= 1
 isb, path_s, subj = n, pat_sbjs[n], subjs[n]
 fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
 for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
@@ -101,6 +101,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     if run_step("pred_qual", subj):
         res_qc = viz.plot_check_quality(fingers, int1, int2, out, timestmp,
                                         axes, fig, subj, subj_diag)
+        print(f"{subj} : {res_qc}")
         res.add_vals("pred_qual", [subj, res_qc])
     else:
         res_qc = res.subj_vals("pred_qual", subj)["quality"].to_list()[0]
@@ -114,6 +115,8 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
             res_tms, res_lg = viz.plot_get_times(fingers, int2,timestmp, axes,
                                                  fig, subj, subj_diag)
             tms_vals = np.hstack((subj, res_tms, 'yes', res_lg))
+            print(f"R/L beg-end: {res_tms[:2]}, {res_tms[2:]}, length: " +
+                  f"{res_lg.astype(int)} secs")
             res.add_vals("times", list(tms_vals))
 
         times = res.get_times(subj)
@@ -126,6 +129,10 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
             fig2, ax = plt.subplots(1, 1, sharex=True, figsize=(20, 10))
             out_checked, relab = viz.plot_oulier_qc(out, fingers, int2, path_s,
                                                     subj, ax, fig2, relab)
+            out_num = [1 if o[4] == 'good' else 0 for o in out_checked]
+            rel_num = np.unique([r[0] for r in relab]).size
+            print(f"done: {len(out_checked)} outliers, good: {sum(out_num)}" + 
+                  f", bad: {len(out_num)-sum(out_num)}, relabaled: {rel_num}")
             res.add_outliers(out_checked, subj)
             plt.close(fig2)
         else:

@@ -19,8 +19,8 @@ def plot_per_axis(ts, time, color, fig_axes, **kwargs):
 
 def plot_per_axis_outlier(outliers, time, color, fig_axes):
     for i, axis in enumerate(fig_axes):
-        ixs = np.hstack([o[i][0][0] for o in outliers if o[i][0][0].shape[0]])
-        vls = np.hstack([o[i][0][1] for o in outliers if o[i][0][1].shape[0]])
+        ixs = np.hstack([o[i][0][0] for o in outliers if len(o) and o[i][0][0].shape[0]])
+        vls = np.hstack([o[i][0][1] for o in outliers if len(o) and o[i][0][1].shape[0]])
         ixs = ixs.astype(int)
         axis.plot(time[ixs], vls, color)
 
