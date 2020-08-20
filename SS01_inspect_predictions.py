@@ -157,7 +157,8 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
         # update relabels
         relab.extend(bd_relab)
         for rlb in bd_relab:
-            int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
+            if not np.isnan(int2[int(rlb[1]), :, int(rlb[0])]):
+                int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
 
         # inspect suspicious
         relabeled= []
@@ -176,7 +177,8 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
             relabeled = [] if np.all(np.isnan(relabeled)) else relabeled
 
         for rlb in relabeled:
-            if not np.all(np.isnan(rlb)):
+            if not (np.all(np.isnan(rlb)) and 
+                    np.isnan(int2[int(rlb[1]), 0, int(rlb[0])])):
                 int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
 
     elif res_qc == "bad":
@@ -185,7 +187,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
             bd_relab, good_pred = viz.plot_ts_inspection(
                 [], timestmp, int1, int2, path_s, subj, subj_diag, axes, fig, ttl)
             n_relab = np.unique([r[0] for r in bd_relab]).size
-            n_gd = np.unique([r[0] for r in good_pred]).size
+            n_gd = len(good_pred)
             print(f"{subj}: {n_relab} relabeled, {n_gd} good")
             res.add_vals('good_pred', [subj, good_pred])
             res.add_bad_pred(bd_relab, subj)
