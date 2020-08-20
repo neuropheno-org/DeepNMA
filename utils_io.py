@@ -93,6 +93,7 @@ class results_dic():
         if not hasattr(self, res_type):
             raise AttributeError ("No such result type")
         rt = getattr(self, res_type)
+        rt.reset_index(drop=True, inplace=True)
 
         # Add input timestamp
         time_stmp = datetime.now().strftime("%d-%b-%Y (%H:%M)")
@@ -133,6 +134,8 @@ class results_dic():
     def add_outliers(self, out_checked, subj):
         # out_checked = [finger num, ax num, sample, pred, inspect]
         time_stmp = datetime.now().strftime("%d-%b-%Y (%H:%M)")
+        self.outliers.reset_index(drop=True, inplace=True)
+        
         for out in out_checked:
             fing, ax, sampl, val, insp = out
             vals = [subj, sampl, fing, ax, val, insp, time_stmp]
@@ -158,6 +161,7 @@ class results_dic():
     def add_bad_pred(self, pred_corrected, subj):
         # pred_corrected = [frames, finger num,x, y]
         time_stmp = datetime.now().strftime("%d-%b-%Y (%H:%M)")
+        self.bad_pred.reset_index(drop=True, inplace=True)
 
         if len(pred_corrected) == 0: # detect this step done
             pred_corrected = [[np.nan, np.nan, np.nan, np.nan]]

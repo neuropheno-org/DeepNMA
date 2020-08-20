@@ -157,7 +157,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
         # update relabels
         relab.extend(bd_relab)
         for rlb in bd_relab:
-            int2[rlb[1], :, rlb[0]] = rlb[2:]
+            int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
 
         # inspect suspicious
         relabeled= []
