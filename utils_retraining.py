@@ -65,7 +65,7 @@ def get_res_frames(subj, res):
             if vals == []:
                 continue
         elif rt =="good_pred" :
-            vals = eval(vals[0])
+            vals = eval(vals[0]) if isinstance(vals[0], str) else vals[0]
         if not any(np.isnan(vals)):
             frames.extend([int(v) for v in vals])
     return np.unique(frames)
