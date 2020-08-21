@@ -25,21 +25,31 @@ def plot_per_axis_outlier(outliers, time, color, fig_axes):
         axis.plot(time[ixs], vls, color)
 
 def plot_check_quality(fingers, int1, int2, outliers, timestmp, axes, fig, 
-                       subj, subj_diag):
-    plot_per_axis(int1, timestmp, 'b', axes)
-    plot_per_axis(int2, timestmp, 'g', axes)
-    plot_per_axis_outlier(outliers, timestmp, 'k*', axes)
-    axes[0].set_ylim(axes[0].get_ylim())
-    axes[1].set_ylim(axes[1].get_ylim())
-    plot_per_axis(fingers, timestmp, 'r', axes, **{'alpha':.1})
-    axes[0].set_title(f'Diag:{subj_diag}| {subj}: doing Quality Inspection')
-    axes[1].set_xlabel(f"Instructions. Prediction quality good for analysis?"
-                       f"\n Press:  0) if no  1) if yes")
+                       subj, subj_diag, path_s):
+    def plotter():
+        plot_per_axis(int1, timestmp, 'b', axes)
+        plot_per_axis(int2, timestmp, 'g', axes)
+        plot_per_axis_outlier(outliers, timestmp, 'k*', axes)
+        axes[0].set_ylim(axes[0].get_ylim())
+        axes[1].set_ylim(axes[1].get_ylim())
+        plot_per_axis(fingers, timestmp, 'r', axes, **{'alpha':.1})
+        axes[0].set_title(f'Diag:{subj_diag}| {subj}: doing Quality Inspection')
+        axes[1].set_xlabel(f"Instructions. Prediction quality good for analysis?"
+                           f"\n Press:  0) if no  1) if yes, i) to inspect TS")
+        
+    plotter()
     fig.tight_layout()
-    vals = [0, 1]
-    res = get_key_resp(fig, vals)
-    res = resp_corr_fig_bkg(fig, res)
-    return res
+    vals, relab = [0, 1, 'i'], []
+    while True:
+        res = get_key_resp(fig, vals)
+        if res == 'i':
+            relab, _ = plot_ts_inspection(
+                    [], timestmp, int1, int2, path_s, subj, subj_diag, axes, fig)
+            plotter()
+        elif res in [0, 1]:
+            res = resp_corr_fig_bkg(fig, res)
+            break
+    return res, relab
 
 def resp_corr_fig_bkg(fig, res):
     if res == 0 or res == 'bad':
