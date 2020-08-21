@@ -247,7 +247,7 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
         if res['inxs']:
             frame_num, = res['inxs']
             pred, relab = plot_pred_relab(path_s, subj, frame_num, int1, int2,
-                                          avline, [])
+                                          avline, relab)
             if len(pred):
                 new_pred.extend(pred)
                 _ = [(l.remove(), l1.remove()) for l, l1 in zip(lines0,lines1)]

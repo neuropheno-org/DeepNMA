@@ -96,11 +96,12 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
 
     # preprocess TS
     int1, int2, out = sig_proc.ts_prepro(fingers, timestmp)
+    relab = []
 
     # Do quality control prediction: good or bad
     if run_step("pred_qual", subj):
-        res_qc = viz.plot_check_quality(fingers, int1, int2, out, timestmp,
-                                        axes, fig, subj, subj_diag)
+        res_qc, relab = viz.plot_check_quality(fingers, int1, int2, out, timestmp,
+                                        axes, fig, subj, subj_diag, path_s)
         print(f"{subj} : {res_qc}")
         res.add_vals("pred_qual", [subj, res_qc])
     else:
@@ -123,7 +124,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
         int1, int2, out = sig_proc.ts_prepro(fingers, timestmp, times)
         subj_data['times'] = times
 
-        relab = []
+
         # Check and select good outliers
         if run_step("outliers", subj):
             fig2, ax = plt.subplots(1, 1, sharex=True, figsize=(20, 10))
@@ -157,7 +158,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
         # update relabels
         relab.extend(bd_relab)
         for rlb in bd_relab:
-            if not np.isnan(int2[int(rlb[1]), :, int(rlb[0])]):
+            if not np.isnan(int2[int(rlb[1]), 0, int(rlb[0])]):
                 int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
 
         # inspect suspicious
