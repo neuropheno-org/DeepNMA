@@ -241,13 +241,13 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
                        "time point for inspection. Then, press Enter) to plot "
                        "frame or Escape) to select another point")
     fig.tight_layout()
-    new_pred, good_pred, relab = [], [], []
+    new_pred, good_pred  = [], []
     while True:
         res, avline = get_clicked_times(fig, axes, 'k')
         if res['inxs']:
             frame_num, = res['inxs']
             pred, relab = plot_pred_relab(path_s, subj, frame_num, int1, int2,
-                                          avline, relab)
+                                          avline, [])
             if len(pred):
                 new_pred.extend(pred)
                 _ = [(l.remove(), l1.remove()) for l, l1 in zip(lines0,lines1)]
@@ -256,9 +256,17 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
                 lines0, lines1 = plot_ts(int2)
             else:
                 good_pred.append(frame_num)
+
+            if len(relab):
+                _ = [(l.remove(), l1.remove()) for l, l1 in zip(lines0,lines1)]
+                new_pred.extend(relab)
+                for p in relab:
+                    int2[int(p[1]),:,int(p[0])] = p[2:]
+                    for ax in axes:
+                        ax.axvline(timestmp[int(p[0])], c='r', lw=1)
+                lines0, lines1 = plot_ts(int2)
         else:
             break
-    new_pred.extend(relab)
     return new_pred, good_pred
 
 
