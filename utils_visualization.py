@@ -19,7 +19,10 @@ def plot_per_axis(ts, time, color, fig_axes, **kwargs):
 
 def plot_per_axis_outlier(outliers, time, color, fig_axes):
     for i, axis in enumerate(fig_axes):
-        ixs = np.hstack([o[i][0][0] for o in outliers if len(o) and o[i][0][0].shape[0]])
+        outs = [o[i][0][0] for o in outliers if len(o) and o[i][0][0].shape[0]]
+        if outs == []:
+            continue
+        ixs = np.hstack(outs)
         vls = np.hstack([o[i][0][1] for o in outliers if len(o) and o[i][0][1].shape[0]])
         ixs = ixs.astype(int)
         axis.plot(time[ixs], vls, color)
@@ -469,7 +472,10 @@ def get_key_times(fig, axes):
     for i, clr in enumerate(clrs):
         axes[1].set_xlabel(f"Instructions. Select {ins[i]}. \n Press: Escape) "
                            "to reselect point. Enter) if good time point")
-        r, _ = get_clicked_times(fig, axes, clr)
+        while True:
+            r, _ = get_clicked_times(fig, axes, clr)
+            if not r['inxs'] == []:
+                break
         resp['inxs'].append(r['inxs'])
         resp['data'].append(r['data'])
     return resp

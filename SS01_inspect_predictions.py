@@ -86,7 +86,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     subj_data={}
 
     subj_diag = df_beh.loc[subj,'General Diagnosis']
-    print(f'Doing s: {isb}, {subj}')
+    print(f'Doing s: {isb}, {subj}/{len(subjs)}')
 
     # Load time stamps & finger positions
     timestmp = uio.load_timestamps(subj, paths)
