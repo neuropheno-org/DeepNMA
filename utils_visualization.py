@@ -264,7 +264,10 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
                     int2[int(p[1]),:,int(p[0])] = p[2:]
                 lines0, lines1 = plot_ts(int2)
             else:
-                good_pred.append(frame_num)
+                if isinstance(frame_num, np.ndarray):
+                    good_pred.append(frame_num)
+                else:
+                    good_pred.append(frame_num)
 
             if len(relab):
                 _ = [(l.remove(), l1.remove()) for l, l1 in zip(lines0,lines1)]
