@@ -14,7 +14,10 @@ import utils_io as uio
 def plot_per_axis(ts, time, color, fig_axes, **kwargs):
     "For each axes subplot plots ts and time"
     for i, axis in enumerate(fig_axes):
-        axis.plot(time, ts[:, i, :].T, color,**kwargs)
+        if color:
+            axis.plot(time, ts[:, i, :].T, color,**kwargs)
+        else:
+             axis.plot(time, ts[:, i, :].T,**kwargs)
 
 
 def plot_per_axis_outlier(outliers, time, color, fig_axes):
@@ -30,13 +33,15 @@ def plot_per_axis_outlier(outliers, time, color, fig_axes):
 def plot_check_quality(fingers, int1, int2, outliers, timestmp, axes, fig, 
                        subj, subj_diag, path_s):
     def plotter():
-        plot_per_axis(int1, timestmp, 'b', axes)
-        plot_per_axis(int2, timestmp, 'g', axes)
+        axes[0].clear()
+        # plot_per_axis(int1, timestmp, 'b', axes)
+        plot_per_axis(int2, timestmp, [], axes)
         plot_per_axis_outlier(outliers, timestmp, 'k*', axes)
         axes[0].set_ylim(axes[0].get_ylim())
         axes[1].set_ylim(axes[1].get_ylim())
-        plot_per_axis(fingers, timestmp, 'r', axes, **{'alpha':.1})
-        axes[0].set_title(f'Diag:{subj_diag}| {subj}: doing Quality Inspection')
+        plot_per_axis(fingers, timestmp, [], axes, **{'alpha':.1})
+        axes[0].set_title(f'Diag:{subj_diag}| {subj}')
+        axes[0].set_xlabel(f"Doing Quality Inspection")
         axes[1].set_xlabel(f"Instructions. Prediction quality good for analysis?"
                            f"\n Press:  0) if no  1) if yes, i) to inspect TS")
         

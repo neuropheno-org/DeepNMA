@@ -15,7 +15,7 @@ from mne.filter import resample
 import utils_feature_extraction as feat_ext
 
 
-def ts_prepro(fingers, timestamp, times=None, max_nans_sec=.5):
+def ts_prepro(fingers, timestamp, times=None, max_nans_sec=.1):
     """Prepro fingers TS.
     
     Parameters
@@ -238,7 +238,7 @@ def detect_outlier(TS, samples_wind=60, order=3):
             ts_int_one.append(smpl_int)
             
         diff_z = zscore(diff)
-        pks_p, _ = feat_ext.find_maxmin_peaks(diff_z[1:], height=3.5)
+        pks_p, _ = feat_ext.find_maxmin_peaks(diff_z[1:], height=5)
         pks_p = pks_p + 1  # add 1 sampl ( first is nan)
         int_smp = np.array(ts_int_one)[pks_p]
 

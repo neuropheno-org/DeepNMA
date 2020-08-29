@@ -79,7 +79,7 @@ subjs_in = [i for i, s in enumerate(subjs) if s not in TS_predictions.keys()]
 pat_sbjs, subjs = [[l[p] for p in subjs_in] for l in [pat_sbjs, subjs]]
 
 
-n= 1
+n= 0
 isb, path_s, subj = n, pat_sbjs[n], subjs[n]
 fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
 for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
@@ -203,7 +203,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     saved_TS_data(paths, TS_predictions)
     axes[0].clear(); axes[1].clear(); fig.patch.set_facecolor('w')
 
-
+q
 
 
 
