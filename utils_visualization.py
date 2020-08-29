@@ -163,6 +163,7 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
         coords_out = int2[:, :, frame_num]
         while True:
             plot_frame_outlier(frame, coords_ori, coords_out, axis)
+            axis.set_title(f"Outlier {i}/{u_val.size}, frame num: {frame_num}")
             axis.set_xlabel(f"Instructions. Outlier (red +) improved prediction?"
                            " Press:  0) if no  1) if yes, r) relabel, p - q) " 
                            " contiguous frames \n Then enter) next"
@@ -338,8 +339,9 @@ def plot_pred_relab(path_s, subj, frame_num, int1, int2, avline, relab, ttl=None
 def nan_inspec(nans_pred, path_s, subj, int1, int2, relab):
     good_pred = []
     bad_relab = []
-    for frame_num in nans_pred:
-        ttl = f"nan inspection, frame # {frame_num}"
+    n_nans = len(nans_pred)
+    for ix, frame_num in enumerate(nans_pred):
+        ttl = f"nan inspection {ix}/{n_nans}, frame # {frame_num}"
         new_pred, relab = plot_pred_relab(path_s, subj, frame_num, int1, int2,
                                           [], relab, ttl)
         if len(new_pred):
