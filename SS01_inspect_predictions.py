@@ -78,13 +78,21 @@ TS_predictions = saved_TS_data(paths)
 subjs_in = [i for i, s in enumerate(subjs) if s not in TS_predictions.keys()]
 pat_sbjs, subjs = [[l[p] for p in subjs_in] for l in [pat_sbjs, subjs]]
 
+missing_timestamps = ['10090_2019_03_29', 
+                      '10091_2019_03_29', 
+                      '10094_2019_03_13', 
+                      '10105_2019_02_27', 
+                      '10107_2019_02_20', 
+                      '10115_2019_04_01']
 
 n= 0
 isb, path_s, subj = n, pat_sbjs[n], subjs[n]
 fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
 for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     subj_data={}
-
+    
+    if subj in missing_timestamps:
+        continue
     subj_diag = df_beh.loc[subj,'General Diagnosis']
     print(f'Doing s: {isb}, {subj}/{len(subjs)}')
 
@@ -203,7 +211,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     saved_TS_data(paths, TS_predictions)
     axes[0].clear(); axes[1].clear(); fig.patch.set_facecolor('w')
 
-q
+
 
 
 
