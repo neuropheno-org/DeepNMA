@@ -265,7 +265,7 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
                 lines0, lines1 = plot_ts(int2)
             else:
                 if isinstance(frame_num, np.ndarray):
-                    good_pred.append(frame_num)
+                    good_pred.append(frame_num[0])
                 else:
                     good_pred.append(frame_num)
 
@@ -355,6 +355,7 @@ def nan_inspec(nans_pred, path_s, subj, int1, int2, relab):
         if len(new_pred):
             bad_relab.extend(new_pred)
         elif len(new_pred) == 0 :
+            
             good_pred.append(frame_num)
     return good_pred, bad_relab, relab
 
