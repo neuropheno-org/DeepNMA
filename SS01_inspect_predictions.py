@@ -85,7 +85,7 @@ missing_timestamps = ['10090_2019_03_29',
                       '10107_2019_02_20', 
                       '10115_2019_04_01']
 
-n= 0
+n= 3
 isb, path_s, subj = n, pat_sbjs[n], subjs[n]
 fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
 for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
@@ -94,7 +94,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     if subj in missing_timestamps:
         continue
     subj_diag = df_beh.loc[subj,'General Diagnosis']
-    print(f'Doing s: {isb}, {subj}/{len(subjs)}')
+    print(f'Doing s: {subj}, {isb}/{len(subjs)}')
 
     # Load time stamps & finger positions
     timestmp = uio.load_timestamps(subj, paths)
@@ -203,13 +203,14 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     else:
         ValueError("No prediction quality information")
 
+    axes[0].clear(); axes[1].clear(); fig.patch.set_facecolor('w')
 
     subj_data['TS'] = int2
     TS_predictions[subj] = subj_data
     retrn.save_labeled_data(int2, res, subj, path_s, pat_dlc_labs, extension,
                       lab_csv_name)
     saved_TS_data(paths, TS_predictions)
-    axes[0].clear(); axes[1].clear(); fig.patch.set_facecolor('w')
+
 
 
 
