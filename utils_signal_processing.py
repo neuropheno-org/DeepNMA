@@ -257,7 +257,10 @@ def get_dist_nans(fingers, int2, max_nans):
         t0, t1 = no_nns[0], no_nns[-1]
         # Get nans from raw TS within task
         nns, = np.where(np.isnan(raw[1]))
-        fing_nans.extend(nns[(nns>t0) & (nns < t1)])
+        nns_c = nns[(nns>t0) & (nns < t1)]
+        nn_c = [n for n in nns_c if not np.isnan(intrp[1][n])]
+        fing_nans.extend(nn_c)
+    fing_nans = np.unique(fing_nans)
 
     n_nans = len(fing_nans)
     if n_nans <= max_nans:
