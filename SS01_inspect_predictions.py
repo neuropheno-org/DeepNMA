@@ -152,13 +152,13 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
         out_good = [o for o in out_checked if 'good' in o]
 
         # Selects nans for retraining
+        bd_relab = []
         if run_step("nans_pred", subj):
             nans_pred = sig_proc.get_dist_nans(fingers, int2, max_nans=5)
             gd_nan_pred, bd_relab, relab = viz.nan_inspec(nans_pred, path_s,
-                                                          subj,int1, int2, relab)
+                                                          subj,fingers, int2, relab)
             res.add_vals('nans_pred', [subj, gd_nan_pred])
         else:
-            bd_relab = []
             gd_nan_pred, = res.subj_vals("nans_pred",
                                          subj)['frames'].values.tolist()
             gd_nan_pred = eval(gd_nan_pred) if gd_nan_pred else []

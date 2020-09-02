@@ -110,23 +110,23 @@ def plot_frame_outlier(frame, coords_ori, coords_out, axis):
 
 def plot_contig_frames(res, frame_num, fingers, int2, path_s, subj, relab):
     fig, ax = plt.subplots(1, 1, figsize=(20, 10))
-    fram_n = frame_num - 1 if res == "p" else frame_num +1
+    fram_n = frame_num - 1 if res == "left" else frame_num +1
     while True:
         fram = uio.get_prediction_frame(path_s, subj, fram_n)
         plot_frame_outlier(fram, fingers[:, :, fram_n],
                            int2[:, :, fram_n], ax)
         ax.set_title(f"Frame n: {fram_n}, outlier frame {frame_num}")
-        ax.set_xlabel(f"Instructions. p) previous n) next"
-                   " frame, r) Relabel preds, escape) finish viewing")
-        res2 = get_key_resp(fig, vals=["escape", "p", "n", "r"])
+        ax.set_xlabel(f"Instructions. <- arrow) previous -> arrow) next"
+                   " frame, l) Label preds, escape) finish viewing")
+        res2 = get_key_resp(fig, vals=["escape", "right", "left", "l"])
         if res2 == 'escape':
             plt.close(fig)
             print("out loop")
             break
-        elif res2 in ["p", "n"]:
-            fram_n = fram_n - 1 if res2 == "p" else fram_n +1
+        elif res2 in ["right", "left"]:
+            fram_n = fram_n - 1 if res2 == "left" else fram_n +1
             ax.clear()
-        elif res2 in ["r"]:
+        elif res2 in ["l"]:
             fig2, ax2 = plt.subplots(1, 1, figsize=(20, 10))
             pred = plot_make_new_pred(fram, int2[:, :, fram_n], fig2, ax2, fram_n)
             relab.extend(pred)
@@ -170,18 +170,18 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
             plot_frame_outlier(frame, coords_ori, coords_out, axis)
             axis.set_title(f"Outlier {i}/{u_val.size}, frame num: {frame_num}")
             axis.set_xlabel(f"Instructions. Outlier (red +) improved prediction?"
-                           " Press:  0) if no  1) if yes, r) relabel, p - q) " 
-                           " contiguous frames \n Then enter) next"
+                           " Press:  0) if no  1) if yes, l) label, left-right arrow) " 
+                           "plot contiguous frames \n Then enter) next"
                            " escape) respond again")
             fig.tight_layout()
             # Select if good outlier
-            res = get_key_resp(fig, vals=[0, 1, "p", "n", "r"])
+            res = get_key_resp(fig, vals=[0, 1, "left", "right", "l"])
             # Plot contiguous frames
-            if res in ["p", "n"]:
+            if res in ["left", "right"]:
                 relab = plot_contig_frames(res, frame_num, fingers, int2,
                                            path_s, subj, relab)
                 res = get_key_resp(fig, vals=[0, 1])
-            elif res == "r":
+            elif res == "l":
                 res = resp_corr_fig_bkg(fig, 0)
                 fig2, ax2 = plt.subplots(1, 1, figsize=(20, 10))
                 pred = plot_make_new_pred(frame, coords_out, fig2, ax2,
@@ -246,11 +246,15 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
 
     plot_per_axis(int1, timestmp, 'b', axes, **{'alpha':.2})
     axes[0].set_title(f'Diag:{subj_diag}| {subj}: doing TS inspection')
-    axes[1].set_xlabel(f"Instructions. Press Enter) to finish or click on a "
+    axes[1].set_xlabel(f"Instructions. Press o) to finish or click on a "
                        "time point for inspection. Then, press Enter) to plot "
                        "frame or Escape) to select another point")
     fig.tight_layout()
     new_pred, good_pred  = [], []
+    plt.rcParams['keymap.zoom'] = ['ctrl+o']
+    plt.rcParams['keymap.yscale'] = ['ctrl+l']
+    plt.rcParams['keymap.xscale'] = ['ctrl+k', 'L']
+    
     while True:
         res, avline = get_clicked_times(fig, axes, 'k')
         if res['inxs']:
@@ -277,7 +281,7 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
                     for ax in axes:
                         ax.axvline(timestmp[int(p[0])], c='r', lw=1)
                 lines0, lines1 = plot_ts(int2)
-        else:
+        elif res['key'] =='o':
             break
     return new_pred, good_pred
 
@@ -294,19 +298,19 @@ def plot_pred_relab(path_s, subj, frame_num, int1, int2, avline, relab, ttl=None
         plot_frame_outlier(frame, coords_ori, coords_out, ax2)
 
         ax2.set_xlabel(f"Good prediction?"
-                       f" Press:  0) if no, r) no and relabel,  1) if yes, p - q) " 
-                       " contiguous frames \n Then enter) next or"
+                       f" Press:  0) if no, l) no and label,  1) if yes, right or left arrows) " 
+                       " plot contiguous frames \n Then enter) next or"
                        " escape) respond again")
         fig2.tight_layout()
         # Select if good outlier
-        res1 = get_key_resp(fig2, vals=[0, 1, "p", "n", "r"])
+        res1 = get_key_resp(fig2, vals=[0, 1, "left", "right", "l"])
         # Plot contiguous frames
-        if res1 in ["p", "n"]:
+        if res1 in ["left", "right"]:
             relab = plot_contig_frames(res1, frame_num, int1, int2, path_s,
                                        subj, relab)
             continue
             # res1 = get_key_resp(fig2, vals=[0, 1])
-        elif res1 == "r":
+        elif res1 == "l":
             pred = plot_make_new_pred(frame, coords_out, fig2, ax2, frame_num)
             new_pred.extend(pred)
             plt.close(fig2)
@@ -518,7 +522,7 @@ def get_clicked_times(fig, axes, clr):
             for l in ax_vls:
                 l.remove()
             ax_vls = []
-        elif resp['key'] == 'enter':
+        elif resp['key'] in ['enter', 'o']:
             break
 
         if len(resp['inxs']) and clr and not resp['inxs'] == previous_resp:
