@@ -254,7 +254,7 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
     plt.rcParams['keymap.zoom'] = ['ctrl+o']
     plt.rcParams['keymap.yscale'] = ['ctrl+l']
     plt.rcParams['keymap.xscale'] = ['ctrl+k', 'L']
-    
+    plt.rcParams['keymap.save'] = ['ctrl+s']
     while True:
         res, avline = get_clicked_times(fig, axes, 'k')
         if res['inxs']:
@@ -286,7 +286,12 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
     return new_pred, good_pred
 
 
-def plot_pred_relab(path_s, subj, frame_num, int1, int2, avline, relab, ttl=None):
+def plot_pred_relab(path_s, subj, frame_num, int1, int2, avline, relab, nan_insp=False, ttl=None):
+    plt.rcParams['keymap.zoom'] = ['ctrl+o']
+    plt.rcParams['keymap.yscale'] = ['ctrl+l']
+    plt.rcParams['keymap.xscale'] = ['ctrl+k', 'L']
+    plt.rcParams['keymap.save'] = ['ctrl+s']
+
     new_pred = []
     fig2, ax2 = plt.subplots(1, 1, figsize=(20, 10))
     if ttl:
@@ -303,7 +308,14 @@ def plot_pred_relab(path_s, subj, frame_num, int1, int2, avline, relab, ttl=None
                        " escape) respond again")
         fig2.tight_layout()
         # Select if good outlier
-        res1 = get_key_resp(fig2, vals=[0, 1, "left", "right", "l"])
+        if nan_insp:
+            ax2.set_xlabel(f"Good prediction?"
+                    f" Press:  s) to Skip 0) if no, l) no and label,  1) if yes, right or left arrows) " 
+                    " plot contiguous frames \n Then enter) next or"
+                    " escape) respond again")
+            res1 = get_key_resp(fig2, vals=[0, 1, "left", "right", "l", 's'])
+        else:
+            res1 = get_key_resp(fig2, vals=[0, 1, "left", "right", "l"])
         # Plot contiguous frames
         if res1 in ["left", "right"]:
             relab = plot_contig_frames(res1, frame_num, int1, int2, path_s,
@@ -322,6 +334,10 @@ def plot_pred_relab(path_s, subj, frame_num, int1, int2, avline, relab, ttl=None
                 coords_out[p[1], :] = p[2:]
             plot_frame_outlier(frame, coords_ori, coords_out, ax2)
             res1 = 0
+        elif res1 == "s":
+            new_pred.extend(["skip"])
+            plt.close(fig2)
+            break
 
         res1 = resp_corr_fig_bkg(fig2, res1)
         ax2.set_xlabel(f"{res1} prediction? Press: Enter) to proceed"
@@ -355,7 +371,9 @@ def nan_inspec(nans_pred, path_s, subj, int1, int2, relab):
     for ix, frame_num in enumerate(nans_pred):
         ttl = f"nan inspection {ix}/{n_nans}, frame # {frame_num}"
         new_pred, relab = plot_pred_relab(path_s, subj, frame_num, int1, int2,
-                                          [], relab, ttl)
+                                          [], relab, nan_insp=True, ttl=ttl)
+        if new_pred == ["skip"]:
+            continue
         if len(new_pred):
             bad_relab.extend(new_pred)
         elif len(new_pred) == 0 :
