@@ -372,7 +372,7 @@ def nan_inspec(nans_pred, path_s, subj, int1, int2, relab):
         ttl = f"nan inspection {ix}/{n_nans}, frame # {frame_num}"
         new_pred, relab = plot_pred_relab(path_s, subj, frame_num, int1, int2,
                                           [], relab, nan_insp=True, ttl=ttl)
-        if new_pred == ["skip"]:
+        if new_pred in ["skip"]:
             continue
         if len(new_pred):
             bad_relab.extend(new_pred)
