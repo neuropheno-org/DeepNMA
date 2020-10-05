@@ -213,6 +213,27 @@ def load_finger_pred(path_s, pred_theshold):
     fingers = fingers[:,:2,:]
     return fingers, prob
 
+# def import_previous_res(res, paths, root_dir, previous_model_name=None):
+    
+#     if previous_model_name is None or len(res.times) > 0:
+#         return res
+
+#     path_old = get_paths(previous_model_name, root_dir)
+#     res_old = results_dic(path_old)
+#     res_with_insp = [ k for k, v in res.res_files.items() if "inspected" in v]
+    
+#     for res_type in res_with_insp:
+#         rt = getattr(res, res_type)
+#         if len(rt)==0:
+#             rt_old = getattr(res_old, res_type)
+#             rt_old['inspected'] = 'no'
+#             rt_old['time_stmp'] = 'NaN'
+#             res.(resType)
+            
+
+
+
+
 
 def get_prediction_frame(path_s, subj, frame_num):
 

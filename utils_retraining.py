@@ -74,12 +74,12 @@ def get_res_frames(subj, res):
 def load_label_csv(folder_str, lab_csv_name):
     f_name = op.join(folder_str, lab_csv_name)
     if op.exists(f_name):
-        lab_csv = pd.read_csv(op.join(folder_str, lab_csv_name))
+        lab_csv = pd.read_csv(op.join(folder_str, lab_csv_name), header=None)
     else:
         # Find a labeled data csv and copy it
-        template = glob.glob(f"{op.dirname(folder_str)}/*/{lab_csv_name}")[0]
-        lab_csv = pd.read_csv(template)
-        lab_csv = lab_csv.iloc[:2, :]
+        template = glob.glob(f"{op.dirname(folder_str)}/*/{lab_csv_name}")[-1]
+        lab_csv = pd.read_csv(template, header=None)
+        lab_csv = lab_csv.iloc[:3, :]
     return lab_csv, f_name
 
 
@@ -122,7 +122,7 @@ def save_labeled_data(TS, res, subj, path_s, DLC_path, extension,
 
         pos, = TS[:,: , frm_ix].reshape((1, -1))
 
-        ix_s = lab_csv.index[lab_csv["scorer"] == img_path].tolist()
+        ix_s = lab_csv.index[lab_csv.iloc[:,0] == img_path].tolist()
         assert(len(ix_s)<2),  "Label repeated, check it please"
         if not ix_s:
             ix_s = ix
@@ -136,9 +136,52 @@ def save_labeled_data(TS, res, subj, path_s, DLC_path, extension,
             else:
                 new_frames.append(frm_ix)
 
-        lab_csv.loc[ix_s, "scorer"] = img_path
+        lab_csv.loc[ix_s, 0] = img_path
         lab_csv.iloc[ix_s, 1:] = pos
         ix = lab_csv.shape[0]
 
     if len(new_frames):
-        lab_csv.to_csv(f_name, index=False)
+        lab_csv.to_csv(f_name, index=False, header=None)
+
+
+def remove_saved_labeled_data(res, subj, path_s, DLC_path, extension,
+                      lab_csv_name):
+    """
+    DLC_path : str
+    
+    Parameters
+    ----------
+    subj : str
+        Name.
+    path_s : str
+        Path to subject predictions csv file.
+    DLC_path : str
+        Folder of labeled-data.
+    extension : str
+        Str with subject folder extension.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    folder_str = op.join(DLC_path, subj + extension)
+
+    lab_csv, f_name = load_label_csv(folder_str, lab_csv_name)
+    
+    frames = get_res_frames(subj, res)
+    lab_fold  = op.basename(DLC_path)
+    removed = False
+    for frm_ix in frames:
+        img_path_full = save_frame_png(frm_ix, subj, path_s, folder_str)
+        img_path = lab_fold + img_path_full.split(lab_fold)[1]
+
+        ix_s = lab_csv.index[lab_csv.iloc[:,0] == img_path].tolist()
+        lab_csv.drop(ix_s, inplace=True)
+        lab_csv.reset_index(drop=True, inplace=True)
+        if len(ix_s):
+            removed = True
+
+    if removed:
+        lab_csv.to_csv(f_name, index=False, header=None)

@@ -215,7 +215,7 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
 
 
 def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
-                       subj_diag, axes, fig, ttl=None):
+                       subj_diag, axes, fig, ttl=None, ts_old=None):
     axes[0].clear()
     axes[1].clear()
     if ttl:
@@ -335,7 +335,7 @@ def plot_pred_relab(path_s, subj, frame_num, int1, int2, avline, relab, nan_insp
             plot_frame_outlier(frame, coords_ori, coords_out, ax2)
             res1 = 0
         elif res1 == "s":
-            new_pred.extend(["skip"])
+            new_pred ="skip"
             plt.close(fig2)
             break
 
@@ -372,7 +372,7 @@ def nan_inspec(nans_pred, path_s, subj, int1, int2, relab):
         ttl = f"nan inspection {ix}/{n_nans}, frame # {frame_num}"
         new_pred, relab = plot_pred_relab(path_s, subj, frame_num, int1, int2,
                                           [], relab, nan_insp=True, ttl=ttl)
-        if new_pred in ["skip"]:
+        if new_pred == "skip":
             continue
         if len(new_pred):
             bad_relab.extend(new_pred)

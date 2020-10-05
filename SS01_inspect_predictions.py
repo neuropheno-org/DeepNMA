@@ -14,6 +14,7 @@ import utils_io as uio
 import utils_signal_processing as sig_proc
 import utils_visualization as viz
 import utils_retraining as retrn
+import shutil
 
 def run_step(step, subj):
     "check if step done, if overwrite true or inspected"
@@ -71,12 +72,12 @@ OVERWRT = {"subj_done" :False,
            "outliers":False,
            "bad_pred":False,
            "good_pred":False,
-           "nans_pred":False}
+           "nans_pred":True}
 
 
 TS_predictions = saved_TS_data(paths)
-subjs_in = [i for i, s in enumerate(subjs) if s not in TS_predictions.keys()]
-pat_sbjs, subjs = [[l[p] for p in subjs_in] for l in [pat_sbjs, subjs]]
+# subjs_in = [i for i, s in enumerate(subjs) if s not in TS_predictions.keys()]
+# pat_sbjs, subjs = [[l[p] for p in subjs_in] for l in [pat_sbjs, subjs]]
 
 missing_timestamps = ['10090_2019_03_29', 
                       '10091_2019_03_29', 
@@ -85,10 +86,14 @@ missing_timestamps = ['10090_2019_03_29',
                       '10107_2019_02_20', 
                       '10115_2019_04_01']
 
-n= 3
+n=7
 isb, path_s, subj = n, pat_sbjs[n], subjs[n]
 fig, axes = plt.subplots(2, 1, sharex=True, figsize=(20, 10))
-for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
+for isb, (path_s, subj) in enumerate(zip(pat_sbjs[17:], subjs[17:])):
+
+    extension = op.splitext(op.basename(path_s))[0]
+    extension = extension.replace('DLC'+model_name,'').replace(subj, '')
+
     subj_data={}
     
     if subj in missing_timestamps:
@@ -155,6 +160,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
         bd_relab = []
         if run_step("nans_pred", subj):
             nans_pred = sig_proc.get_dist_nans(fingers, int2, max_nans=5)
+            print(f"{subj}: num nans is {len(nans_pred)}")
             gd_nan_pred, bd_relab, relab = viz.nan_inspec(nans_pred, path_s,
                                                           subj,fingers, int2, relab)
             res.add_vals('nans_pred', [subj, gd_nan_pred])
@@ -185,28 +191,46 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
             relabeled = res.subj_vals("bad_pred", subj)[cols_v].values.tolist()
             relabeled = [] if np.all(np.isnan(relabeled)) else relabeled
 
-        for rlb in relabeled:
-            if not (np.all(np.isnan(rlb)) and 
-                    np.isnan(int2[int(rlb[1]), 0, int(rlb[0])])):
-                int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
-
     elif res_qc == "bad":
+        # int1, int2, out = sig_proc.ts_prepro(fingers, timestmp)
         if run_step("good_pred", subj) & run_step("bad_pred", subj):  ##TODO fix with a proper step
             ttl = f"SELECT GOOD and BAD PREDICTIONS for retraining"
-            bd_relab, good_pred = viz.plot_ts_inspection(
+            relabeled, good_pred = viz.plot_ts_inspection(
                 [], timestmp, int1, int2, path_s, subj, subj_diag, axes, fig, ttl)
-            n_relab = np.unique([r[0] for r in bd_relab]).size
+            n_relab = np.unique([r[0] for r in relabeled]).size
             n_gd = len(good_pred)
             print(f"{subj}: {n_relab} relabeled, {n_gd} good")
-            res.add_vals('good_pred', [subj, good_pred])
-            res.add_bad_pred(bd_relab, subj)
+            # res.add_vals('good_pred', [subj, good_pred])
+            res.add_bad_pred(relabeled, subj)
+        else:
+            cols_v = ['frames', 'finger', 'x', 'y']
+            relabeled = res.subj_vals("bad_pred", subj)[cols_v].values.tolist()
+            relabeled = [] if np.all(np.isnan(relabeled)) else relabeled
     else:
         ValueError("No prediction quality information")
 
-    axes[0].clear(); axes[1].clear(); fig.patch.set_facecolor('w')
 
+    for rlb in relabeled:
+        if not np.all(np.isnan(rlb)):
+            int2[int(rlb[1]), :, int(rlb[0])] = rlb[2:]
+
+    axes[0].clear(); axes[1].clear(); fig.patch.set_facecolor('w')
+    plt.show()
     subj_data['TS'] = int2
     TS_predictions[subj] = subj_data
+    
+    if not extension == '_Finger_Tapping':
+        folder_ori = op.join(pat_dlc_labs, subj + '_Finger_Tapping')
+        if op.exists(folder_ori):
+            print('Moving one with bad extension')
+            folder_dest = op.join(pat_dlc_labs+'_out', subj + extension)
+            shutil.move(folder_ori, folder_dest)
+            retrn.remove_saved_labeled_data(res, subj, path_s, pat_dlc_labs,
+                                            'Finger_Tapping', lab_csv_name)
+
+    retrn.remove_saved_labeled_data(res, subj, path_s, pat_dlc_labs, extension,
+                      lab_csv_name)
+
     retrn.save_labeled_data(int2, res, subj, path_s, pat_dlc_labs, extension,
                       lab_csv_name)
     saved_TS_data(paths, TS_predictions)
