@@ -31,7 +31,7 @@ def plot_per_axis_outlier(outliers, time, color, fig_axes):
         axis.plot(time[ixs], vls, color)
 
 def plot_check_quality(fingers, int1, int2, outliers, timestmp, axes, fig, 
-                       subj, subj_diag, path_s,ts_old=None):
+                       subj, subj_diag, path_s,ts_old=None, old_frames=None):
     def plotter():
         axes[0].clear()
         # plot_per_axis(int1, timestmp, 'b', axes)
@@ -40,13 +40,20 @@ def plot_check_quality(fingers, int1, int2, outliers, timestmp, axes, fig,
         axes[0].set_ylim(axes[0].get_ylim())
         axes[1].set_ylim(axes[1].get_ylim())
         plot_per_axis(fingers, timestmp, [], axes, **{'alpha':.1})
+        
         if ts_old is not None:
             plot_per_axis(ts_old, timestmp, 'g-.', axes, **{'alpha':.2})
+        
+        if old_frames is not None:
+            plot_per_axis(ts_old[:,:, old_frames], timestmp[old_frames], 'go', axes, **{'alpha':.2})
+            plot_per_axis(int2[:,:, old_frames], timestmp[old_frames], 'ko', axes, **{'alpha':.2})
+            
         axes[0].set_title(f'Diag:{subj_diag}| {subj}')
         axes[0].set_xlabel("Doing Quality Inspection")
         axes[1].set_xlabel("Instructions. Prediction quality good for analysis?"
-                           f"\n Press:  0) if no  1) if yes, i) to inspect TS")
-        
+                           "\n Press:  0) if no  1) if yes, i) to inspect TS")
+
+            
     plotter()
     fig.tight_layout()
     vals, relab = [0, 1, 'i'], []
@@ -90,7 +97,7 @@ def plot_get_times(fingers, int2,timestmp, axes, fig, subj, subj_diag):
 
     plot_per_axis(fingers, timestmp, 'r', axes, **{'alpha':.1})
     axes[0].set_title(f'Diag:{subj_diag}| {subj}: doing R-L Beg-End times')
-    axes[1].set_xlabel(f"Instructions. Select R/L beg/end."
+    axes[1].set_xlabel("Instructions. Select R/L beg/end."
                        " Click: Right (RED) beginning - end, Left (Green) beg."
                        f" - end time points. \n Press: "
                        "Escape) to reselect point. Enter) if good time point")
@@ -118,7 +125,7 @@ def plot_contig_frames(res, frame_num, fingers, int2, path_s, subj, relab):
         plot_frame_outlier(fram, fingers[:, :, fram_n],
                            int2[:, :, fram_n], ax)
         ax.set_title(f"Frame n: {fram_n}, outlier frame {frame_num}")
-        ax.set_xlabel(f"Instructions. <- arrow) previous -> arrow) next"
+        ax.set_xlabel("Instructions. <- arrow) previous -> arrow) next"
                    " frame, l) Label preds, escape) finish viewing")
         res2 = get_key_resp(fig, vals=["escape", "right", "left", "l"])
         if res2 == 'escape':
@@ -217,7 +224,7 @@ def plot_oulier_qc(outliers, fingers, int2, path_s, subj, axis, fig, relab):
 
 
 def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
-                       subj_diag, axes, fig, ttl=None, ts_old=None):
+                       subj_diag, axes, fig, ttl=None, ts_old=None, old_frames=None):
     axes[0].clear()
     axes[1].clear()
     if ttl:
@@ -252,7 +259,12 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
     plot_per_axis(int1, timestmp, 'b', axes, **{'alpha':.2})
     if ts_old is not None:
         plot_per_axis(ts_old, timestmp, 'g-.', axes, **{'alpha':.2})
-    
+        
+    if old_frames is not None:
+        plot_per_axis(ts_old[:,:, old_frames], timestmp[old_frames], 'go', axes, **{'alpha':.2})
+        plot_per_axis(int2[:,:, old_frames], timestmp[old_frames], 'ko', axes, **{'alpha':.2})
+        
+        
     axes[0].set_title(f'Diag:{subj_diag}| {subj}: doing TS inspection')
     axes[1].set_xlabel("Instructions. Press o) to finish or click on a "
                        "time point for inspection. Then, press Enter) to plot "

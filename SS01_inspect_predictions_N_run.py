@@ -86,8 +86,8 @@ path_old = uio.get_paths(previous_model_name, root_dir)
 res_old = uio.results_dic(path_old)
 TS_predictions_old = saved_TS_data(path_old)
 
-# subjs_in = [i for i, s in enumerate(subjs) if s not in TS_predictions.keys()]
-# pat_sbjs, subjs = [[l[p] for p in subjs_in] for l in [pat_sbjs, subjs]]
+subjs_in = [i for i, s in enumerate(subjs) if s not in TS_predictions.keys()]
+pat_sbjs, subjs = [[l[p] for p in subjs_in] for l in [pat_sbjs, subjs]]
 
 # Remove subj from list
 missing_timestamps = ['10090_2019_03_29', 
@@ -118,6 +118,8 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     
     subj_diag = df_beh.loc[subj,'General Diagnosis']
     print(f'Doing s: {subj}, {isb}/{len(subjs)}')
+    
+    old_frames = retrn.get_res_frames(subj, res_old)
 
     # Load time stamps & finger positions
     timestmp = uio.load_timestamps(subj, paths)
@@ -145,7 +147,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
             viz.resp_corr_fig_bkg(fig, res_qc)
 
         res_qc, relab = viz.plot_check_quality(fingers, int1, int2, out, timestmp,
-                                        axes, fig, subj, subj_diag, path_s, ts_old)
+                                        axes, fig, subj, subj_diag, path_s, ts_old, old_frames)
         print(f"{subj} : {res_qc}")
         res.add_vals("pred_qual", [subj, res_qc])
     else:
