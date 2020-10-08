@@ -194,7 +194,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs[17:], subjs[17:])):
     elif res_qc == "bad":
         # int1, int2, out = sig_proc.ts_prepro(fingers, timestmp)
         if run_step("good_pred", subj) & run_step("bad_pred", subj):  ##TODO fix with a proper step
-            ttl = f"SELECT GOOD and BAD PREDICTIONS for retraining"
+            ttl = "SELECT GOOD and BAD PREDICTIONS for retraining"
             relabeled, good_pred = viz.plot_ts_inspection(
                 [], timestmp, int1, int2, path_s, subj, subj_diag, axes, fig, ttl)
             n_relab = np.unique([r[0] for r in relabeled]).size

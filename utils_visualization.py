@@ -31,7 +31,7 @@ def plot_per_axis_outlier(outliers, time, color, fig_axes):
         axis.plot(time[ixs], vls, color)
 
 def plot_check_quality(fingers, int1, int2, outliers, timestmp, axes, fig, 
-                       subj, subj_diag, path_s):
+                       subj, subj_diag, path_s,ts_old=None):
     def plotter():
         axes[0].clear()
         # plot_per_axis(int1, timestmp, 'b', axes)
@@ -40,9 +40,11 @@ def plot_check_quality(fingers, int1, int2, outliers, timestmp, axes, fig,
         axes[0].set_ylim(axes[0].get_ylim())
         axes[1].set_ylim(axes[1].get_ylim())
         plot_per_axis(fingers, timestmp, [], axes, **{'alpha':.1})
+        if ts_old is not None:
+            plot_per_axis(ts_old, timestmp, 'g-.', axes, **{'alpha':.2})
         axes[0].set_title(f'Diag:{subj_diag}| {subj}')
-        axes[0].set_xlabel(f"Doing Quality Inspection")
-        axes[1].set_xlabel(f"Instructions. Prediction quality good for analysis?"
+        axes[0].set_xlabel("Doing Quality Inspection")
+        axes[1].set_xlabel("Instructions. Prediction quality good for analysis?"
                            f"\n Press:  0) if no  1) if yes, i) to inspect TS")
         
     plotter()
@@ -52,7 +54,7 @@ def plot_check_quality(fingers, int1, int2, outliers, timestmp, axes, fig,
         res = get_key_resp(fig, vals)
         if res == 'i':
             relab, _ = plot_ts_inspection(
-                    [], timestmp, int1, int2, path_s, subj, subj_diag, axes, fig)
+                    [], timestmp, int1, int2, path_s, subj, subj_diag, axes, fig, [], ts_old)
             plotter()
         elif res in [0, 1]:
             res = resp_corr_fig_bkg(fig, res)
@@ -222,8 +224,11 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
         axes[0].set_xlabel(ttl, fontweight='bold')
 
     def plot_ts(int2):
-        lines0 = axes[0].plot(timestmp, int2[:,0,:].T, '-', lw=1, picker=3)
-        lines1 = axes[1].plot(timestmp, int2[:,1,:].T, '-', lw=1, picker=3)
+        lines0 = axes[0].plot(timestmp, int2[:,0,:].T, '-', lw=1, picker=True)
+        lines1 = axes[1].plot(timestmp, int2[:,1,:].T, '-', lw=1, picker=True)
+        for ix in range(2):
+            axes[ix].yaxis.set_pickradius(25) 
+            axes[ix].xaxis.set_pickradius(1) 
 
         ln_clr= ['r', 'g']
         n_side = len(lines0)/2
@@ -245,8 +250,11 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
                           markerfacecolor=None)
 
     plot_per_axis(int1, timestmp, 'b', axes, **{'alpha':.2})
+    if ts_old is not None:
+        plot_per_axis(ts_old, timestmp, 'g-.', axes, **{'alpha':.2})
+    
     axes[0].set_title(f'Diag:{subj_diag}| {subj}: doing TS inspection')
-    axes[1].set_xlabel(f"Instructions. Press o) to finish or click on a "
+    axes[1].set_xlabel("Instructions. Press o) to finish or click on a "
                        "time point for inspection. Then, press Enter) to plot "
                        "frame or Escape) to select another point")
     fig.tight_layout()
@@ -258,7 +266,12 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
     while True:
         res, avline = get_clicked_times(fig, axes, 'k')
         if res['inxs']:
-            frame_num, = res['inxs']
+            if isinstance(res['inxs'], list):
+                res['inxs'] = res['inxs'][0]
+            if isinstance(res['inxs'], np.ndarray):
+                res['inxs'] = res['inxs'][0] 
+            frame_num = res['inxs']
+        
             pred, relab = plot_pred_relab(path_s, subj, frame_num, int1, int2,
                                           avline, [])
             if len(pred):
