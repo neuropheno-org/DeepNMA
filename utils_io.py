@@ -238,9 +238,9 @@ def load_finger_pred(path_s, pred_theshold):
 def get_prediction_frame(path_s, subj, frame_num):
 
     dir_vid = op.dirname(path_s)
-    path_vid, = glob.glob(op.join(dir_vid, subj + '*.avi'))
+    path_vid = glob.glob(op.join(dir_vid, subj + '*.avi'))
     
-    cap = cv2.VideoCapture(path_vid)
+    cap = cv2.VideoCapture(path_vid[0])
 
     if cap.isOpened():
         hasFrame, frame = cap.read()

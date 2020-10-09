@@ -120,7 +120,8 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     print(f'Doing s: {subj}, {isb}/{len(subjs)}')
     
     old_frames = retrn.get_res_frames(subj, res_old)
-
+    if old_frames.size == 0:
+        old_frames = None
     # Load time stamps & finger positions
     timestmp = uio.load_timestamps(subj, paths)
     fingers, prob = uio.load_finger_pred(path_s, pred_theshold=.1)
