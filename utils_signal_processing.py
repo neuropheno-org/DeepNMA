@@ -130,12 +130,12 @@ def resample_ts(ts, time, sfreq, sfreq_common):
     TS_rs, time_rs = [], []
     rtio = sfreq/sfreq_common
     if rtio < 1:
-        TS_rs = resample(ts, up=rtio)
+        TS_rs = resample(ts, up=1/rtio)
     elif rtio > 1:
         TS_rs = resample(ts, down=rtio)
 
-    time_rs = np.arange(time[0], time[-1]+1, 1/sfreq_common) 
-    time_rs = time_rs[:TS_rs.size]
+    time_rs = np.arange(time[0], time[-1]+(1/sfreq_common), 1/sfreq_common) 
+    time_rs = time_rs[:TS_rs.shape[1]]
     return TS_rs, time_rs, rtio
 
 
