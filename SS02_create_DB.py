@@ -73,23 +73,25 @@ for subj in TS_preds.keys():
     stats_s = []
     TS = TS_preds[subj]["TS"]
     tstmp = TS_preds[subj]["timestamp"]
-    sfreq = 1/ np.average(np.diff(tstmp.T))
     # make times for each finger 
     times = times_later_2_fing(TS_preds[subj]["times"], TS.shape[0]/2)
     
     ts_fil =[]
     ts_tstmp = []
+    ts_freqs = []
     for fing_ts, fing_time in zip(TS, times):
         
         fing_ts = fing_ts[:,fing_time[0]:fing_time[1]]
         fing_tsmp = tstmp[fing_time[0]:fing_time[1]].flatten()
         mask = np.zeros([fing_tsmp.shape[0]]) ==1
-    
+        mask = np.isnan(fing_ts[0])
         
         ts2, time2 = sig_proc.interp_tracking(fing_ts, fing_tsmp, mask, lin_space=True)
+        sfreq = 1/ np.average(np.diff(time2.T))
+        ts_freqs.append(sfreq)
         ts3, time3, ratio = sig_proc.resample_ts(ts2, time2, sfreq, sfreq_common)
         
-        ts_fil.append(filter_data(ts3, sfreq, 1, 10, pad='reflect'))
+        ts_fil.append(filter_data(ts3, sfreq, 1, 10, pad='reflect', verbose=0))
         ts_tstmp.append(time3)
         
         # ts_fil = filter_data(ts3, sfreq, 1, 10, pad='reflect')
@@ -100,8 +102,9 @@ for subj in TS_preds.keys():
     del TS_preds[subj]['raw']
     TS_preds[subj]['TS_filt'] = ts_fil
     TS_preds[subj]['times_filt'] = ts_tstmp
-    TS_preds[subj]['sfreq_ori'] = [sfreq, ratio]
-
+    ts_freqs.append(ratio)
+    TS_preds[subj]['sfreq_ori'] = [ts_freqs, ratio]
+    print(ts_freqs[0], ts_freqs[3])
 
 fname = f"TS_filt_{BP_filr[0]}_{BP_filr[1]}hz_{sfreq_common}Fs_{model_name}.pickle"
 with open(paths['out'] + fname, 'wb') as f:
