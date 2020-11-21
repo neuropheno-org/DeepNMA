@@ -33,7 +33,7 @@ def model_1D_Seq(X, y, ker_sz1=10, ker_sz2=10, n_ker1=40, n_ker2=40, n_flat=100)
 
 def model_1d_low_high(X, y):
     i_shape = X.shape[1:3]
-    drop_out_rate = 0.5
+    drop_out_rate = 0.501
     input_shape = i_shape
     
     input_tensor = Input(shape=(input_shape))
