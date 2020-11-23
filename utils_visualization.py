@@ -231,6 +231,9 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
         axes[0].set_xlabel(ttl, fontweight='bold')
 
     def plot_ts(int2):
+        if ts_old is not None:
+            plot_per_axis(ts_old, timestmp, 'g-', axes, **{'alpha':.4})
+        
         lines0 = axes[0].plot(timestmp, int2[:,0,:].T, '-', lw=1, picker=True)
         lines1 = axes[1].plot(timestmp, int2[:,1,:].T, '-', lw=1, picker=True)
         for ix in range(2):
@@ -257,8 +260,7 @@ def plot_ts_inspection(out_checked, timestmp, int1, int2, path_s, subj,
                           markerfacecolor=None)
 
     plot_per_axis(int1, timestmp, 'b', axes, **{'alpha':.2})
-    if ts_old is not None:
-        plot_per_axis(ts_old, timestmp, 'g-.', axes, **{'alpha':.2})
+
         
     if old_frames is not None:
         plot_per_axis(ts_old[:,:, old_frames], timestmp[old_frames], 'go', axes, **{'alpha':.2})

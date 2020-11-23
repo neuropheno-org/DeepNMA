@@ -46,9 +46,9 @@ def saved_TS_data(paths, TS_predictions=None):
 root_dir = '/home/adonay/Desktop/projects/Ataxia'
 
 pat_dlc = '/data/databases/Finger_tapping/FingerTapping-Adonay-2020-01-29/'
-pat_dlc_vids = [pat_dlc + 'videos/',
-                 pat_dlc + 'videos_dsmpl_labeled/',
-                 pat_dlc + 'new_videos/']
+pat_dlc_vids = [pat_dlc + 'videos/']#,
+                # pat_dlc + 'videos_dsmpl_labeled/',
+                # pat_dlc + 'new_videos/']
 
 lab_csv_name = "CollectedData_Adonay.csv"
 pat_dlc_labs= op.join(pat_dlc, "labeled-data")
@@ -69,7 +69,7 @@ res = uio.results_dic(paths)
 
 OVERWRT = {"subj_done" :False,
            'pred_qual':False,
-           'times':False,
+           'times':True,
            "outliers":False,
            "bad_pred":False,
            "good_pred":False,
@@ -81,7 +81,7 @@ TS_predictions = saved_TS_data(paths)
 
 # Load results and predictions from previous run
 previous_model_name = '_resnet152_FingerTappingJan29shuffle2_550000'
-PREV_RUN = True if previous_model_name else False
+PREV_RUN = False#True if previous_model_name else False
 path_old = uio.get_paths(previous_model_name, root_dir)
 res_old = uio.results_dic(path_old)
 TS_predictions_old = saved_TS_data(path_old)
@@ -90,13 +90,7 @@ subjs_in = [i for i, s in enumerate(subjs) if s not in TS_predictions.keys()]
 pat_sbjs, subjs = [[l[p] for p in subjs_in] for l in [pat_sbjs, subjs]]
 
 # Remove subj from list
-missing_timestamps = ['10090_2019_03_29', 
-                      '10091_2019_03_29', 
-                      '10094_2019_03_13', 
-                      '10105_2019_02_27', 
-                      '10107_2019_02_20', 
-                      '10115_2019_04_01']
-
+missing_timestamps = []
 bad_record_fname = f"{path_old['out']}Subj_comments_{previous_model_name}.csv"
 bad_recordings = pd.read_csv(bad_record_fname)['subj']
 
@@ -116,16 +110,21 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
 
     subj_data={}
     
-    subj_diag = df_beh.loc[subj,'General Diagnosis']
+    subj_diag = df_beh.loc[subj,'gen_diagnosis']
     print(f'Doing s: {subj}, {isb}/{len(subjs)}')
     
     old_frames = retrn.get_res_frames(subj, res_old)
     if old_frames.size == 0:
         old_frames = None
-    # Load time stamps & finger positions
-    timestmp = uio.load_timestamps(subj, paths)
+        
+    
     fingers, prob = uio.load_finger_pred(path_s, pred_theshold=.1)
     subj_data['raw'] = fingers
+    
+    # Load time stamps & finger positions
+    timestmp = uio.load_timestamps(subj, paths)
+    if timestmp.size != fingers.shape[2]:  # Last GoPro videos
+        timestmp = timestmp[:fingers.shape[2]]
     subj_data['timestamp'] = timestmp
 
     if PREV_RUN:
@@ -138,7 +137,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
         times = res_old.get_times(subj)
     else:
         times = None
-    int1, int2, out = sig_proc.ts_prepro(fingers, timestmp, times)
+    int1, int2, out = sig_proc.ts_prepro(fingers, timestmp, times, Outl=False)
 
     relab = []
     # Do quality control prediction: good or bad
@@ -171,23 +170,23 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
             res.add_vals("times", [i for i in tms_vals[0]])
 
         times = res.get_times(subj)
-        int1, int2, out = sig_proc.ts_prepro(fingers, timestmp, times)
+        int1, int2, out = sig_proc.ts_prepro(fingers, timestmp, times, Outl=False)
         subj_data['times'] = times
 
 
         # Check and select good outliers
         if PREV_RUN and len(res.subj_vals("outliers", subj)) == 0:
             out_checked = []
-        elif run_step("outliers", subj):
-            fig2, ax = plt.subplots(1, 1, sharex=True, figsize=(20, 10))
-            out_checked, relab = viz.plot_oulier_qc(out, fingers, int2, path_s,
-                                                    subj, ax, fig2, relab)
-            out_num = [1 if o[4] == 'good' else 0 for o in out_checked]
-            rel_num = np.unique([r[0] for r in relab]).size
-            print(f"done: {len(out_checked)} outliers, good: {sum(out_num)}" + 
-                  f", bad: {len(out_num)-sum(out_num)}, relabaled: {rel_num}")
-            res.add_outliers(out_checked, subj)
-            plt.close(fig2)
+        # elif run_step("outliers", subj):
+        #     fig2, ax = plt.subplots(1, 1, sharex=True, figsize=(20, 10))
+        #     out_checked, relab = viz.plot_oulier_qc(out, fingers, int2, path_s,
+        #                                             subj, ax, fig2, relab)
+        #     out_num = [1 if o[4] == 'good' else 0 for o in out_checked]
+        #     rel_num = np.unique([r[0] for r in relab]).size
+        #     print(f"done: {len(out_checked)} outliers, good: {sum(out_num)}" + 
+        #           f", bad: {len(out_num)-sum(out_num)}, relabaled: {rel_num}")
+        #     res.add_outliers(out_checked, subj)
+        #     plt.close(fig2)
         else:
             cols_v = ['finger', 'x_y_ax', 'frames', 'pos', 'inspected']
             out_checked = res.subj_vals("outliers", subj)[cols_v].values.tolist()
@@ -271,6 +270,7 @@ for isb, (path_s, subj) in enumerate(zip(pat_sbjs, subjs)):
     retrn.save_labeled_data(int2, res, subj, path_s, pat_dlc_labs, extension,
                       lab_csv_name)
     saved_TS_data(paths, TS_predictions)
+    plt.pause(.01)
 
 
 

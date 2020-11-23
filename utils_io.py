@@ -51,7 +51,7 @@ def get_sbj_folders(path_list, name_len=16, sufix='.pickle' ):
 def get_paths(model_name, root_dir="."):
     path = {
     "timestamps" : root_dir +"/_All_Video_Timestamps_or_Framerates/",
-    "beh" : root_dir +"/2019_12_18_All_Clinical_Data.csv",
+    "beh" : root_dir +"/2020_05_21_All_Tasks-data2.csv",
     "out" : root_dir + "/outputs/DLC_finger_tracking/"
     }
     path["out_TS"] = op.join(path['out'], f'TS_data{model_name}.pickle')
@@ -197,8 +197,12 @@ class results_dic():
 
 def load_timestamps(subj, paths):
     fname_tstm = f"{paths['timestamps']}{subj}_Finger_Tapping_ts.xlsx"
-    timestmp = pd.read_excel(fname_tstm,header=None).values
-    timestmp -= timestmp[0]
+    if op.exists(fname_tstm):
+        timestmp = pd.read_excel(fname_tstm,header=None).values
+    else:
+        fname_tstm = f"{paths['timestamps']}{subj}_Finger_Tapping_ts.csv"
+        timestmp = pd.read_csv(fname_tstm,header=None).values
+    timestmp -= timestmp[0]        
     return timestmp
 
 

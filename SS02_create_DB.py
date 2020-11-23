@@ -30,11 +30,6 @@ import utils_feature_extraction as feat_ext
 def saved_TS_data(paths, TS_predictions=None):
     "Save TS_predictions if not None or load them/create dict"
 
-    if TS_predictions is not None:
-        with open(paths['out_TS'], 'wb') as f:
-            pickle.dump(TS_predictions, f)
-        return
-
     if op.exists(paths['out_TS']):
         with open(paths['out_TS'], 'rb') as f:
             TS_predictions = pickle.load(f)
@@ -54,7 +49,7 @@ def times_later_2_fing(times, n_right, n_left=None):
     
 # Path definitions
 root_dir = '/home/adonay/Desktop/projects/Ataxia'
-model_name = '_resnet152_FingerTappingJan29shuffle1_730000'
+model_name = '_resnet152_FingerTappingJan29shuffle1_650000'
 paths = uio.get_paths(model_name, root_dir)
 
 # load data
@@ -65,7 +60,7 @@ TS_preds = saved_TS_data(paths)
 TS_preds = {k:v for k, v in TS_preds.items() if v['pred_qual'] == 'good'}
 
 sfreq_common = 60
-BP_filr = [1, 10]
+# BP_filr = [1, 10]
 
 
 stats = []
@@ -83,15 +78,17 @@ for subj in TS_preds.keys():
         
         fing_ts = fing_ts[:,fing_time[0]:fing_time[1]]
         fing_tsmp = tstmp[fing_time[0]:fing_time[1]].flatten()
-        mask = np.zeros([fing_tsmp.shape[0]]) ==1
+
         mask = np.isnan(fing_ts[0])
-        
+        if any(np.isnan(fing_ts[0])==True):
+            stats.append(subj)
         ts2, time2 = sig_proc.interp_tracking(fing_ts, fing_tsmp, mask, lin_space=True)
         sfreq = 1/ np.average(np.diff(time2.T))
         ts_freqs.append(sfreq)
         ts3, time3, ratio = sig_proc.resample_ts(ts2, time2, sfreq, sfreq_common)
         
-        ts_fil.append(filter_data(ts3, sfreq, 1, 10, pad='reflect', verbose=0))
+        # ts_fil.append(filter_data(ts3, sfreq_common, 1, 10, pad='reflect', verbose=0))
+        ts_fil.append(ts3)
         ts_tstmp.append(time3)
         
         # ts_fil = filter_data(ts3, sfreq, 1, 10, pad='reflect')
@@ -104,9 +101,9 @@ for subj in TS_preds.keys():
     TS_preds[subj]['times_filt'] = ts_tstmp
     ts_freqs.append(ratio)
     TS_preds[subj]['sfreq_ori'] = [ts_freqs, ratio]
-    print(ts_freqs[0], ts_freqs[3])
 
-fname = f"TS_filt_{BP_filr[0]}_{BP_filr[1]}hz_{sfreq_common}Fs_{model_name}.pickle"
+# fname = f"TS_filt_{BP_filr[0]}_{BP_filr[1]}hz_{sfreq_common}Fs_{model_name}.pickle"
+fname = f"TS_{sfreq_common}Fs_{model_name}.pickle"
 with open(paths['out'] + fname, 'wb') as f:
     pickle.dump(TS_preds, f)
     

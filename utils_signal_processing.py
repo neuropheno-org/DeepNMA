@@ -15,7 +15,7 @@ from mne.filter import resample
 import utils_feature_extraction as feat_ext
 
 
-def ts_prepro(fingers, timestamp, times=None, max_nans_sec=.1):
+def ts_prepro(fingers, timestamp, times=None, max_nans_sec=.1, Outl=True):
     """Prepro fingers TS.
     
     Parameters
@@ -78,8 +78,10 @@ def ts_prepro(fingers, timestamp, times=None, max_nans_sec=.1):
             # get outlier ts time, index and value 
             s_otl = [np.vstack((s_ix[i], v)) for i, v in zip(o_ix, o_val)]
             s_out.append(s_otl)
-
-            s_ts_into = correct_outliers(s_ts_int1, o_ix, o_val)
+            if Outl is True:
+                s_ts_into = correct_outliers(s_ts_int1, o_ix, o_val)
+            else:
+                s_ts_into = s_ts_int1
             s_ts_int2, _ = interp_tracking(s_ts_into, s_tstm, msk,
                                            lin_space=False)
             # Rebuild ts corrected
@@ -129,12 +131,13 @@ def resample_ts(ts, time, sfreq, sfreq_common):
     """Resample signal to a common sfreq."""
     TS_rs, time_rs = [], []
     rtio = sfreq/sfreq_common
+
     if rtio < 1:
         TS_rs = resample(ts, up=1/rtio)
     elif rtio > 1:
         TS_rs = resample(ts, down=rtio)
 
-    time_rs = np.arange(time[0], time[-1]+(1/sfreq_common), 1/sfreq_common) 
+    time_rs = np.arange(time[0], time[-1]+(1/sfreq_common)*2, 1/sfreq_common) 
     time_rs = time_rs[:TS_rs.shape[1]]
     return TS_rs, time_rs, rtio
 
