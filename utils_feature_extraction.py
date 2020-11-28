@@ -11,13 +11,13 @@ Created on Mon May 18 12:43:32 2020
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import find_peaks, filtfilt
-from scipy.stats import iqr
+from scipy.stats import iqr, entropy
 from mne.filter import filter_data
 from scipy import linalg
 
 
-def get_TS_features(TS, time, hand):
-    """ Extract time series (TS) features from {right or left} hand, returns
+def get_TS_features(TS, time, prefix, suffix, deriv_ord):
+    """ Extract time series (TS) features, returns
     time series featrures in a dictornary.
     
     Parameters
@@ -25,42 +25,97 @@ def get_TS_features(TS, time, hand):
     TS : 1D array
         Times series to extract features
     time : in seconds
-        Time for each sample
-    hand: string {'r', 'l'}
-        String to be added in the dic of features
-        
+        Time for each sample.
+    prefix : str
+        To be added at beginning of keys name of dict features
+    suffix: str
+        To be added at the end of keys name of dict features
+    deriv_ord: int
+        The max derivative order from which to compute features. Up to 4th order.
+    
     Returns
     --------
     
     Dict with features
     """
-    vel = np.gradient(TS, time)
-    acc = np.gradient(vel, time)
-    jerk = np.gradient(acc, time)
-    jounce = np.gradient(jerk, time)
     
-    ts = dict()
-    ts['ts_vel_' + hand] = np.average(vel)
-    # ts['ts_0vel_' + hand] = sum((vel[:-1]*vel[1:])<0)/ time[-1]-time[0]
+    def percentile_90(x):
+        return np.percentile(x,90)
     
-    ts['ts_acc_' + hand] = np.average(acc)
-    ts['ts_jerk_' + hand] = np.average(jerk)
-    ts['ts_jounce_' + hand] = np.average(jounce)
-    ts['ts_vel_abs_' + hand] = np.average(np.abs(vel))
-    ts['ts_acc_abs_' + hand] = np.average(np.abs(acc))
-    ts['ts_jerk_abs_' + hand] = np.average(np.abs(jerk))
-    ts['ts_jounce_abs_' + hand] = np.average(np.abs(jounce))
+    def percentile_10(x):
+        return np.percentile(x,10)    
     
-    ts['ts_amp_max_' + hand] = np.max(TS)
-    ts['ts_amp_min_' + hand] = np.min(TS)
-    ts['ts_amp_abs_avg_' + hand] = np.average(np.abs(TS)) 
+    def sig_range(x):
+        return max(x) - min(x)
     
-    ts['ts_vel_std_' + hand] = np.std(vel)
-    ts['ts_vel_range_' + hand] = max(vel) - min(vel)
-    ts['ts_vel_med_' + hand] = np.median(vel)
-    ts['ts_vel_10th_' + hand] = np.percentile(vel,10)
-    ts['ts_vel_90th_' + hand] = np.percentile(vel,90)
-    ts['ts_vel_iqr_' + hand] = iqr(vel)
+    def sing_entropy(x):
+        hist1 = np.histogram(x, density=True)
+        # ent = -(hist1[0]*np.log(np.abs(hist1[0]))).sum()
+        return entropy(hist1[0], base=2)
+    
+    def abs_avg (x):
+        return np.average(np.abs(x))
+    
+    der_names = ["pos", 'vel', 'acc', 'jerk', 'jounce']
+    
+    measures = [(np.average, "avg"),
+                (abs_avg, "t_avg"),
+                (np.max, "max"),
+                (np.min, "min"),
+                (np.std, "std"),
+                (np.median, "med"),
+                (percentile_90, "pth90"),
+                (percentile_10, "pth10"), 
+                (sig_range, "range"),
+                (iqr, "iqr"),
+                (sing_entropy, "entropy")]
+    
+             
+    features = dict()
+    
+    for order in np.arange(deriv_ord + 1):
+        ord_name = der_names[order]
+        
+        if order == 0:
+            ts_deriv = [TS]
+        else:    
+            deriv = np.gradient(ts_deriv[order - 1], time)
+            ts_deriv.append(deriv)
+        
+        for measure, name in measures:            
+            feat = measure(ts_deriv[order])
+            
+            features[f"{prefix}_{ord_name}_{name}_{suffix}"] = feat
+        
+        
+        
+    # vel = np.gradient(TS, time)
+    # acc = np.gradient(vel, time)
+    # jerk = np.gradient(acc, time)
+    # jounce = np.gradient(jerk, time)
+    
+    # ts = dict()
+    # ts['ts_vel_' + name_ext] = np.average(vel)
+    # # ts['ts_0vel_' + hand] = sum((vel[:-1]*vel[1:])<0)/ time[-1]-time[0]
+    
+    # ts['ts_acc_' + hand] = np.average(acc)
+    # ts['ts_jerk_' + hand] = np.average(jerk)
+    # ts['ts_jounce_' + hand] = np.average(jounce)
+    # ts['ts_vel_abs_' + hand] = np.average(np.abs(vel))
+    # ts['ts_acc_abs_' + hand] = np.average(np.abs(acc))
+    # ts['ts_jerk_abs_' + hand] = np.average(np.abs(jerk))
+    # ts['ts_jounce_abs_' + hand] = np.average(np.abs(jounce))
+    
+    # ts['ts_amp_max_' + hand] = np.max(TS)
+    # ts['ts_amp_min_' + hand] = np.min(TS)
+    # ts['ts_amp_abs_avg_' + hand] = np.average(np.abs(TS)) 
+    
+    # ts['ts_vel_std_' + hand] = np.std(vel)
+    # ts['ts_vel_range_' + hand] = max(vel) - min(vel)
+    # ts['ts_vel_med_' + hand] = np.median(vel)
+    # ts['ts_vel_10th_' + hand] = np.percentile(vel,10)
+    # ts['ts_vel_90th_' + hand] = np.percentile(vel,90)
+    # ts['ts_vel_iqr_' + hand] = iqr(vel)
     
     
     # add entropy, loop over features
@@ -74,7 +129,7 @@ def get_TS_features(TS, time, hand):
     # ts['ts_acc_iqr_' + hand] = iqr(acc)
 
     
-    return ts
+    return features
 
 
 def get_periods_feat(TS, time, hand, do_plot=False, ax=None, height=.1, prominence=.05, filt_param=[60, 2, 6]):
@@ -94,6 +149,8 @@ def get_periods_feat(TS, time, hand, do_plot=False, ax=None, height=.1, prominen
     --------
     Dict with features
     """
+    
+    
     pk_pos, _ =  find_maxmin_peaks(TS, 2,  height=height, prominence_f=prominence, filt_param=filt_param)
     _, pk_neg =  find_maxmin_peaks(TS, 2,  height=1, prominence_f=prominence,  filt_param=filt_param)
     pks_all = np.sort(np.hstack((pk_pos, pk_neg)))
@@ -102,7 +159,7 @@ def get_periods_feat(TS, time, hand, do_plot=False, ax=None, height=.1, prominen
     ix_nxt_neg, ix_n = get_next_through(pk_pos, pk_neg)
     
     pkth_times =  time[pk_neg[ix_nxt_neg]] - time[pk_pos[:ix_n]] 
-    assert(np.all(pkth_times>0)) # if neg though bebore peak
+    assert(np.all(pkth_times>0)) # if neg through bebore peak
     pkth_time_diff = np.diff(pkth_times)
 
     
