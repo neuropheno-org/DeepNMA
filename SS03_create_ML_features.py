@@ -27,6 +27,19 @@ def minmax_scaler(x):
     x = (x - xmin)/ (xmax - xmin)
     return x
 
+def make_fig():
+    fig = plt.figure(constrained_layout=True)
+    gs = fig.add_gridspec(4, 4)
+    ax1 = fig.add_subplot(gs[0, :])
+    ax1.set_title('TS, peaks and pk slopes')
+    ax2 = fig.add_subplot(gs[1,:-2])
+    ax3 = fig.add_subplot(gs[2, :-2])
+    ax4 = fig.add_subplot(gs[3, 0])
+    ax5 = fig.add_subplot(gs[3, 1])
+    ax6 = fig.add_subplot(gs[1, 2:])
+    ax7 = fig.add_subplot(gs[2, 2:])
+    ax8 = fig.add_subplot(gs[3, 2:])
+    return fig, [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
 
 def filename_creator(subj, folder_name):
     
@@ -71,22 +84,35 @@ with open(paths['out'] + fname, 'rb') as f:
     TS_preds = pickle.load( f)
 
 
+ord_num = 3
 ## Initialize dataframe for storing features and patient data
 subjs = list(TS_preds.keys())
 init_var = []
-for h in ['r', 'l']:
+for s in ['r', 'l']:
     t = np.arange(200)
     v = np.sin(t)
-    feat_TS = feat_ext.get_TS_features(v, t, h)
-    init_var.extend(list(feat_TS.keys()))
-    feat_pks = feat_ext.get_periods_feat(v,t, h, False, None, .5, .1, [1, None, None])
-    init_var.extend(list(feat_pks.keys()))
-df = pd.DataFrame(columns=init_var, index=subjs)
+    pk_pos, pk_neg = feat_ext.get_peaks(v, height=.5, prominence=.1, time=[])
+    
+    feat_thth = feat_ext.get_pkpk_feat(v, t, pk_neg, "thth", s)        
+    feat_pkth = feat_ext.get_pktrough_feat(v, t, pk_pos, pk_neg, "pkth", s)        
+    feat_pks = feat_ext.get_peak_shape_feat(v, t, pk_pos, 'pk', s, ord_num)
+    feat_ths = feat_ext.get_peak_shape_feat(v, t, pk_neg, 'th', s, ord_num)
+    feat_TS = feat_ext.get_TS_features(v, t, 'ts', s, ord_num, exclude_order=[0])
+        
+    keys = [list(k.keys()) for k in [feat_TS, feat_pks, feat_ths, feat_pkth, feat_thth]]
+    keys = [i for kk in keys for i in kk]
+    
+df = pd.DataFrame(columns=keys, index=subjs)
 
-n= 20
+n= 5
 n += 1
 subj = subjs[n]
 fig0, ax = plt.subplots(1)
+
+do_plot = False
+fig, axs= make_fig()
+
+
 
 
 # run analysis
@@ -102,37 +128,47 @@ for n, subj in enumerate(subjs):
         ts_inx = ts[ix_inx][:,:min_sz] 
         ts_thb = ts[ix_thb][:,:min_sz] 
         
+        
         tapping = np.sqrt(np.sum(ts_inx - ts_thb, axis=0)**2)
         
-        tapping = filter_data(tapping, sfreq_common, BP_filr[0], BP_filr[1], pad='reflect', verbose=0)
-        tapping = zscore(tapping)
+        tapping1 = filter_data(tapping, sfreq_common, BP_filr[0], BP_filr[1], pad='reflect', verbose=0)
+        tapping1 = zscore(tapping1)
+        
+        tapping2 = filter_data(tapping, sfreq_common, None, BP_filr[1], pad='reflect', verbose=0)
+        tapping2 = zscore(tapping2)
+        
         time = times[ix_inx][:min_sz]
                
-        
-        _, freq, line = ax.psd(tapping, Fs=sfreq_common, return_line=True)
+        _, freq, line = ax.psd(tapping1, Fs=sfreq_common, return_line=True)
         px = line[0].get_ydata()
         mx = np.argmax(px[6:])+6
         pk_fq = freq[mx]
-        filt_param = [sfreq_common, pk_fq-1,8]
 
-        feat_pks = feat_ext.get_periods_feat(tapping, time, s, False, [],  height=.05, prominence=.1)
-        feat_TS = feat_ext.get_TS_features(tapping, time, s)
+
+        pk_pos, pk_neg = feat_ext.get_peaks(tapping1, height=.05, prominence=.1, time=time, do_plot=do_plot, ax=axs[0])
+        
+        
+        feat_thth = feat_ext.get_pkpk_feat(tapping2, time, pk_neg, "thth", s,  do_plot=do_plot, axs=axs[3:5])        
+        feat_pkth = feat_ext.get_pktrough_feat(tapping2, time, pk_pos, pk_neg, "pkth", s,  do_plot=do_plot, axs=axs[1:3])        
+        feat_pks = feat_ext.get_peak_shape_feat(tapping2, time, pk_pos, 'pk', s, ord_num, do_plot=do_plot, ax=axs[0])
+        feat_ths = feat_ext.get_peak_shape_feat(tapping2, time, pk_neg, 'th', s, ord_num, do_plot=do_plot, ax=axs[0])
+        feat_TS = feat_ext.get_TS_features(tapping2, time, 'ts', s, ord_num, exclude_order=[0], do_plot=do_plot, axs=axs[5:])
 
         
-        feat = {**feat_TS, **feat_pks}#, **feat_pks2}
+        feat = {**feat_TS, **feat_pks, **feat_ths, **feat_thth, **feat_pkth}
         for k, v in feat.items():
             df.loc[subj, k]= v
         
         # Calculate finger correlations
-        ts_inx_f = filter_data(ts_inx, sfreq_common, 1, None, pad='reflect', verbose=0)
-        ts_thb_f = filter_data(ts_thb, sfreq_common, 1, None, pad='reflect', verbose=0)
+        ts_inx_f = np.diff(filter_data(ts_inx, sfreq_common, 1, None, pad='reflect', verbose=0))
+        ts_thb_f = np.diff(filter_data(ts_thb, sfreq_common, 1, None, pad='reflect', verbose=0))
 
         neg_corr = min(np.corrcoef(ts_inx_f, ts_thb_f)[0,2], np.corrcoef(ts_inx_f, ts_thb_f)[1,3])
         pos_corr = max(np.corrcoef(ts_inx_f, ts_thb_f)[0,2], np.corrcoef(ts_inx_f, ts_thb_f)[1,3])
 
         
-        # df.loc[subj, "ts_fing_corr_pos" + s] = pos_corr
-        df.loc[subj, "ts_fing_corr_neg" + s] = neg_corr
+        df.loc[subj, "ts_vel_corr_pos" + s] = pos_corr
+        df.loc[subj, "ts_vel_corr_neg" + s] = neg_corr
         
         df.loc[subj, "pk_freq_" + s] = pk_fq
         df.loc[subj, "out_times_" + s] = times[ix_inx][-1] - times[ix_inx][0]
@@ -154,7 +190,6 @@ fname_out = paths['out'] + f'FT_feat_{n_sbj}subj_{BP_filr[0]}_{BP_filr[1]}hz_{sf
 
 assert(n_sbj == len(subjs))
 Finger_tapping.to_csv(fname_out)   
-height,prominence = [1, .1], .05
-print(f"height: {height}, prominence: {prominence}") 
-# runfile('/data/github/DeepNMA/SS04_feature_ML_class.py', wdir='/data/github/DeepNMA')
+
+runfile('/data/github/DeepNMA/SS04_feature_ML_class.py', wdir='/data/github/DeepNMA')
 # runfile('/data/github/DeepNMA/SS04_feature_ML_regres.py', wdir='/data/github/DeepNMA')
