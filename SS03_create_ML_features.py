@@ -17,6 +17,11 @@ import utils_signal_processing as sig_proc
 import utils_feature_extraction as feat_ext
 from mne.filter import filter_data
 from sklearn.decomposition import PCA
+import matplotlib 
+font = {'family' : 'normal',
+        'size'   : 15}
+
+matplotlib.rc('font', **font)
 
 def zscore(x):
     x = (x - np.nanmean(x))/ np.nanstd(x)
@@ -28,7 +33,7 @@ def minmax_scaler(x):
     return x
 
 def make_fig():
-    fig = plt.figure(constrained_layout=True)
+    fig = plt.figure(figsize=(15, 20), constrained_layout=True)
     gs = fig.add_gridspec(4, 4)
     ax1 = fig.add_subplot(gs[0, :])
     ax1.set_title('TS, peaks and pk slopes')
@@ -51,11 +56,11 @@ def filename_creator(subj, folder_name):
         severity = 0
         ttl = f"{n} {subj}, age {df_beh.loc[subj, 'age']} ,{diagn}"
     elif diagn == "PD":
-        ttl = f"{n} {subj}, age {df_beh.loc[subj, 'age']} ,{diagn}, {df_beh.loc[subj, ' UPDRS Total']}"
+        ttl = f"{n} {subj}, age {df_beh.loc[subj, 'age']} ,{diagn}, {df_beh.loc[subj, 'updrs_arm_total_R']}"
         
         severity = df_beh.loc[subj, 'updrs_arm_total_R']
     else:
-        ttl = f"{n} {subj}, age {df_beh.loc[subj, 'age']} ,{ddiagn}, {df_beh.loc[subj, 'BARS Total']}"
+        ttl = f"{n} {subj}, age {df_beh.loc[subj, 'age']} ,{diagn}, {df_beh.loc[subj, 'common_arm_score_L']}"
         severity = df_beh.loc[subj, 'common_arm_score_L']
      
     fname = f"{folder_name}/{severity}_{diag_num}_{age}_{subj}.png" 
@@ -84,6 +89,7 @@ with open(paths['out'] + fname, 'rb') as f:
     TS_preds = pickle.load( f)
 
 
+
 ord_num = 3
 ## Initialize dataframe for storing features and patient data
 subjs = list(TS_preds.keys())
@@ -104,7 +110,7 @@ for s in ['r', 'l']:
     
 df = pd.DataFrame(columns=keys, index=subjs)
 
-n= 5
+n= 15
 n += 1
 subj = subjs[n]
 fig0, ax = plt.subplots(1)
@@ -158,7 +164,7 @@ for n, subj in enumerate(subjs):
         feat = {**feat_TS, **feat_pks, **feat_ths, **feat_thth, **feat_pkth}
         for k, v in feat.items():
             df.loc[subj, k]= v
-        
+
         # Calculate finger correlations
         ts_inx_f = np.diff(filter_data(ts_inx, sfreq_common, 1, None, pad='reflect', verbose=0))
         ts_thb_f = np.diff(filter_data(ts_thb, sfreq_common, 1, None, pad='reflect', verbose=0))
@@ -167,8 +173,8 @@ for n, subj in enumerate(subjs):
         pos_corr = max(np.corrcoef(ts_inx_f, ts_thb_f)[0,2], np.corrcoef(ts_inx_f, ts_thb_f)[1,3])
 
         
-        df.loc[subj, "ts_vel_corr_pos" + s] = pos_corr
-        df.loc[subj, "ts_vel_corr_neg" + s] = neg_corr
+        df.loc[subj, "ts_vel_corr_pos_" + s] = pos_corr
+        df.loc[subj, "ts_vel_corr_neg_" + s] = neg_corr
         
         df.loc[subj, "pk_freq_" + s] = pk_fq
         df.loc[subj, "out_times_" + s] = times[ix_inx][-1] - times[ix_inx][0]
@@ -182,7 +188,10 @@ for n, subj in enumerate(subjs):
      
     # for c_r, c_l in zip(r_feat, l_feat):
     #     df[c_r[:-1]+"b"] = df[c_r]*weigh_rl[0] + df[c_l]*weigh_rl[1]
-        
+    if do_plot:
+        fname = filename_creator(subj, paths['out']+"TS_feats_imgs")
+        fig.savefig(fname) 
+        _ = [a.cla() for a in axs]
 Finger_tapping = pd.concat([df, df_beh],  axis=1, join='inner')
 n_sbj = Finger_tapping.shape[0]
 
